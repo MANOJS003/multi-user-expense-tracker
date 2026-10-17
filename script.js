@@ -235,9 +235,39 @@ function switchTab(tabName) {
     if (tabName === 'analytics') renderAnalyticsCharts();
 }
 
-/* Mobile nav is now a fixed bottom bar (see #tab-nav mobile styles in
-   style.css) instead of a sliding drawer, so no open/close JS is needed -
-   switchTab() below handles everything, same as desktop. */
+/* ----- mobile sidebar (tab menu slides in below 768px) ----- */
+function setSidebarOpen(open) {
+    const nav = document.getElementById('tab-nav');
+    const overlay = document.getElementById('sidebar-overlay');
+    const toggle = document.getElementById('menu-toggle');
+    if (nav) nav.classList.toggle('is-open', open);
+    if (overlay) overlay.classList.toggle('is-open', open);
+    if (toggle) toggle.setAttribute('aria-expanded', String(open));
+    // Lets CSS drop the header's backdrop-filter while open, so the fixed
+    // drawer/overlay size against the viewport instead of the header's box.
+    document.body.classList.toggle('sidebar-drawer-open', open);
+    document.body.classList.toggle('overflow-hidden', open);
+}
+
+function openSidebar() { setSidebarOpen(true); }
+
+function closeSidebar() { setSidebarOpen(false); }
+
+function toggleSidebar() {
+    const nav = document.getElementById('tab-nav');
+    setSidebarOpen(!(nav && nav.classList.contains('is-open')));
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    // Picking any menu item (including Add Entry) closes the sidebar
+    const nav = document.getElementById('tab-nav');
+    if (nav) nav.addEventListener('click', e => { if (e.target.closest('button')) closeSidebar(); });
+
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSidebar(); });
+
+    // Reset the drawer state when the window grows to desktop size
+    window.matchMedia('(min-width: 768px)').addEventListener('change', e => { if (e.matches) closeSidebar(); });
+});
 
 function setFilterMode(mode) {
     currentFilterMode = mode;

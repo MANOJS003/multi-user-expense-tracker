@@ -604,113 +604,170 @@ html.dark #confirm-modal > div {
 .no-scrollbar { scrollbar-width: none; }
 
 /* =========================================================
-   MOBILE BOTTOM NAV BAR (below 768px the tab menu sits fixed at the
-   bottom of the screen, icon-on-top like a native app tab bar, instead
-   of a horizontal scroller or side drawer).
+   MOBILE SIDEBAR (below 768px the tab menu slides in from the left)
    Desktop (768px and up) keeps the horizontal tab bar.
    ========================================================= */
+#sidebar-overlay { display: none; }
+
+/* menu icon morphs into a close "X" feel while the drawer is open */
+#menu-toggle i { display: inline-block; transition: transform 0.35s var(--ease-spring); }
+#menu-toggle[aria-expanded="true"] i { transform: rotate(90deg) scale(1.1); }
+
 @media (max-width: 767px) {
+    #sidebar-overlay {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 1;
+        background: radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.25), rgba(15, 23, 42, 0.55) 70%);
+        backdrop-filter: blur(3px);
+        -webkit-backdrop-filter: blur(3px);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.35s ease, visibility 0.35s ease;
+    }
+    #sidebar-overlay.is-open { opacity: 1; visibility: visible; }
+
     #tab-nav {
         position: fixed !important;
-        left: 0 !important;
-        right: 0 !important;
+        top: 0 !important;
         bottom: 0 !important;
-        top: auto !important;
-        z-index: 30 !important;
-        width: 100% !important;
-        max-width: 100% !important;
+        left: 0 !important;
+        z-index: 2 !important;
+        width: 17rem !important;
+        max-width: 85vw !important;
         display: flex !important;
-        flex-direction: row !important;
+        flex-direction: column !important;
         align-items: stretch !important;
-        justify-content: space-around !important;
-        gap: 0 !important;
-        padding: 0.35rem 0.2rem calc(0.4rem + env(safe-area-inset-bottom, 0px)) !important;
-        overflow-x: visible !important;
-        overflow-y: hidden !important;
-        border-top: 1px solid rgba(15, 23, 42, 0.08) !important;
-        background: #ffffff !important;
-        box-shadow: 0 -10px 28px -12px rgba(15, 23, 42, 0.28);
-        animation: fadeUp 0.5s var(--ease-spring) both;
+        gap: 0.25rem !important;
+        padding: 1rem 0.75rem !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        border-top: none !important;
+        border-right: none !important;
+        background: #2e60b1 !important;
+        box-shadow: 14px 0 40px -10px rgba(46, 96, 177, 0.55);
+        transform: translateX(-100%) scale(0.97);
+        opacity: 0;
+        transition: transform 0.45s var(--ease-spring), opacity 0.3s ease, box-shadow 0.3s ease;
     }
     html.dark #tab-nav {
-        background: #1f2937 !important;
-        border-top-color: rgba(255, 255, 255, 0.08) !important;
-        box-shadow: 0 -10px 28px -12px rgba(0, 0, 0, 0.65);
+        background: #244d8f !important;
+        box-shadow: 14px 0 40px -10px rgba(0, 0, 0, 0.6);
+    }
+    #tab-nav.is-open { transform: translateX(0) scale(1); opacity: 1; }
+
+    /* animated gradient accent strip along the drawer's right edge,
+       matching the header's bottom gradient bar */
+    #tab-nav::after {
+        content: "";
+        position: absolute;
+        top: 0; right: 0; bottom: 0;
+        width: 3px;
+        z-index: 3;
+        background: linear-gradient(180deg, var(--c-indigo), var(--c-cyan), var(--c-emerald), var(--c-rose), var(--c-indigo));
+        background-size: 100% 300%;
+        animation: gradientShift 6s ease infinite;
     }
 
-    /* animated gradient line along the top edge, same vibe as the header's bar */
+    /* ambient floating blob drifting behind the menu items, same language as
+       the login screen's floating bubbles */
     #tab-nav::before {
         content: "";
         position: absolute;
-        top: 0; left: 0; right: 0;
-        height: 2px;
-        background: linear-gradient(90deg, var(--c-indigo), var(--c-cyan), var(--c-emerald), var(--c-rose), var(--c-indigo));
-        background-size: 300% 100%;
-        animation: gradientShift 6s linear infinite;
+        top: -10%; left: -30%;
+        width: 220px; height: 220px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0) 70%);
+        pointer-events: none;
+        z-index: 0;
+        animation: blobFloatA 16s ease-in-out infinite;
+    }
+    #tab-nav .nav-tab { position: relative; z-index: 1; }
+    #tab-nav > div.md\:hidden { position: relative; z-index: 1; }
+
+    /* themed, slim scrollbar so the drawer's scroll thumb matches the vibe */
+    #tab-nav::-webkit-scrollbar { width: 5px; }
+    #tab-nav::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.35); border-radius: 99px; }
+
+    /* fade hint at the bottom so it's clear the menu list can scroll */
+    #tab-nav {
+        mask-image: linear-gradient(to bottom, black calc(100% - 28px), transparent 100%);
+        -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 28px), transparent 100%);
     }
 
     #tab-nav .nav-tab {
-        position: relative;
-        flex: 1 1 0;
-        min-width: 0;
-        flex-direction: column !important;
-        justify-content: center !important;
-        align-items: center !important;
-        gap: 3px !important;
-        padding: 0.3rem 0.1rem !important;
-        border-radius: 12px !important;
-        font-size: 10px !important;
-        white-space: nowrap;
-        color: #94a3b8 !important;
-        background: transparent !important;
-        box-shadow: none !important;
-        transition: color 0.25s ease, transform 0.2s var(--ease-spring);
+        width: 100%;
+        justify-content: flex-start;
+        padding: 0.7rem 0.9rem !important;
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.85) !important;
+        transition: transform 0.25s var(--ease-spring), background 0.25s ease, color 0.25s ease;
     }
-    #tab-nav .nav-tab span { font-size: 9.5px; line-height: 1; }
-    #tab-nav .nav-tab i { font-size: 15px !important; transition: transform 0.25s var(--ease-spring); }
-    #tab-nav .nav-tab:hover { transform: none; box-shadow: none; }
-    #tab-nav .nav-tab:active { transform: scale(0.88); }
-
-    /* active tab: brand-blue icon/text + a bouncy pop + small glowing dot underneath */
+    #tab-nav .nav-tab i { color: inherit !important; }
+    #tab-nav .nav-tab:hover { transform: none; background: rgba(255, 255, 255, 0.14) !important; }
+    #tab-nav .nav-tab:active { transform: scale(0.96); }
+    /* active tab: white pill with brand-blue text + a soft glow, readable on the blue drawer */
     #tab-nav .nav-tab.bg-blue-50 {
-        color: #2563eb !important;
-        background: rgba(37, 99, 235, 0.08) !important;
+        background: #ffffff !important;
+        color: #2e60b1 !important;
+        box-shadow: 0 6px 18px -4px rgba(0, 0, 0, 0.35), 0 0 0 0 rgba(255, 255, 255, 0.6);
+        animation: glowPulse 2.4s infinite;
     }
-    html.dark #tab-nav .nav-tab.bg-blue-50 {
-        color: #60a5fa !important;
-        background: rgba(96, 165, 250, 0.12) !important;
-    }
-    #tab-nav .nav-tab.bg-blue-50 i {
-        animation: bounceIn 0.5s var(--ease-spring) both;
-    }
-    #tab-nav .nav-tab.bg-blue-50::after {
+    /* small bright indicator bar that marks which item is active */
+    #tab-nav .nav-tab.bg-blue-50::before {
         content: "";
         position: absolute;
-        bottom: 1px;
+        left: -0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
         width: 4px;
-        height: 4px;
-        border-radius: 50%;
-        background: currentColor;
-        animation: fadeIn 0.3s ease both, glowPulse 2s infinite;
+        height: 60%;
+        border-radius: 0 4px 4px 0;
+        background: #ffffff;
+        animation: fadeIn 0.3s ease both;
     }
 
-    /* push page content above the fixed bar and lift the floating add button */
-    #app-section main { padding-bottom: 4.75rem !important; }
-    .fab { bottom: calc(4.75rem + 14px) !important; }
+    /* "Menu" header row + close button, recolored for the blue drawer */
+    #tab-nav > div.md\:hidden {
+        border-bottom-color: rgba(255, 255, 255, 0.25) !important;
+    }
+    #tab-nav > div.md\:hidden span {
+        color: #ffffff !important;
+    }
+    #tab-nav > div.md\:hidden button {
+        color: rgba(255, 255, 255, 0.85) !important;
+    }
+    #tab-nav > div.md\:hidden button:hover {
+        background: rgba(255, 255, 255, 0.14) !important;
+        color: #ffffff !important;
+    }
+
+    /* staggered pop-in for each menu item every time the drawer opens -
+       re-triggers automatically because the rule only matches while .is-open
+       is present, so the animation restarts fresh on every toggle */
+    #tab-nav.is-open .nav-tab {
+        animation: slideInRow 0.45s var(--ease-spring) both;
+    }
+    #tab-nav.is-open .nav-tab:nth-child(2) { animation-delay: 0.04s; }
+    #tab-nav.is-open .nav-tab:nth-child(3) { animation-delay: 0.08s; }
+    #tab-nav.is-open .nav-tab:nth-child(4) { animation-delay: 0.12s; }
+    #tab-nav.is-open .nav-tab:nth-child(5) { animation-delay: 0.16s; }
+    #tab-nav.is-open .nav-tab:nth-child(6) { animation-delay: 0.20s; }
+    #tab-nav.is-open .nav-tab:nth-child(7) { animation-delay: 0.24s; }
+    #tab-nav.is-open .nav-tab:nth-child(8) { animation-delay: 0.28s; }
 
     /* The header uses backdrop-filter, which makes it the containing block for
        any position:fixed descendant (Safari/iOS + modern Chromium behavior).
-       #tab-nav is a child of <header> and is now fixed to the bottom of the
-       screen, so without this it would be confined to the header's own box
-       instead of the real viewport. Solid background here has negligible
-       visual impact since the header sits at the very top anyway. */
-    #app-section > header {
+       That shrinks #tab-nav/#sidebar-overlay down to the header's own box
+       instead of the full screen. Drop the filter while the drawer is open
+       so the fixed drawer/overlay size themselves against the viewport. */
+    body.sidebar-drawer-open #app-section > header {
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
-        background: #ffffff !important;
     }
-    html.dark #app-section > header { background: #111827 !important; }
 }
+
 .no-scrollbar::-webkit-scrollbar { display: none; }
 
 /* form fields used in the new modals */
