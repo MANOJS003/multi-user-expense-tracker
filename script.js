@@ -23,7 +23,7 @@ window.addEventListener('DOMContentLoaded', () => {
    SESSION / AUTH
    ========================================================= */
 function checkExistingSession() {
-    const activeUser = sessionStorage.getItem('active_user_email');
+    const activeUser = localStorage.getItem('active_user_email');
     if (activeUser) {
         userSessionEmail = activeUser;
         document.getElementById('user-badge').textContent = activeUser;
@@ -144,7 +144,7 @@ document.getElementById('auth-form').addEventListener('submit', async (e) => {
 
 function startSession(email) {
     userSessionEmail = email;
-    sessionStorage.setItem('active_user_email', email);
+    localStorage.setItem('active_user_email', email);
     document.getElementById('user-badge').textContent = email;
     document.getElementById('login-section').classList.add('hidden');
     document.getElementById('app-section').classList.remove('hidden');
@@ -186,7 +186,7 @@ async function sendToSheet(payload) {
 document.getElementById('logout-btn').addEventListener('click', () => {
     userSessionEmail = "";
     transactions = [];
-    sessionStorage.removeItem('active_user_email');
+    localStorage.removeItem('active_user_email');
     document.getElementById('app-section').classList.add('hidden');
     document.getElementById('login-section').classList.remove('hidden');
     document.getElementById('auth-password').value = "";
@@ -220,6 +220,8 @@ function setupDefaultDates() {
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const today = toYMD(now);
     document.getElementById('filter-month-input').value = `${year}-${month}`;
+    // The month filter can never be pushed into a future month.
+    document.getElementById('filter-month-input').max = `${year}-${month}`;
     document.getElementById('entry-date').value = today;
     // Expenses/income can only be logged for today or earlier, never for a future date.
     document.getElementById('entry-date').max = today;
@@ -572,7 +574,7 @@ function toYMD(d) {
 }
 
 function getActiveUserSession() {
-    const email = userSessionEmail || sessionStorage.getItem('active_user_email') || '';
+    const email = userSessionEmail || localStorage.getItem('active_user_email') || '';
     return {
         id: email,
         name: email ? email.split('@')[0] : 'User',

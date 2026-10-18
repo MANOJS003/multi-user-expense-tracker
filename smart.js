@@ -35,14 +35,14 @@ function monthStats(ym) {
 function monthBadges(s, inProgress) {
     const out = [];
     if (s.rate !== null) {
-        if (s.rate >= 40) out.push({ icon: '💎', name: 'Super Saver', color: '#8b5cf6' });
-        else if (s.rate >= 20) out.push({ icon: '🏅', name: 'Smart Saver', color: '#10b981' });
-        else if (s.rate >= 10) out.push({ icon: '🌱', name: 'Steady Saver', color: '#06b6d4' });
-        else if (s.rate >= 0) out.push({ icon: '🚀', name: 'Getting Started', color: '#f59e0b' });
-        else out.push({ icon: '⚠️', name: 'Overspent', color: '#ef4444' });
+        if (s.rate >= 40) out.push({ icon: 'fas fa-gem', name: 'Super Saver', color: '#8b5cf6' });
+        else if (s.rate >= 20) out.push({ icon: 'fas fa-medal', name: 'Smart Saver', color: '#10b981' });
+        else if (s.rate >= 10) out.push({ icon: 'fas fa-seedling', name: 'Steady Saver', color: '#06b6d4' });
+        else if (s.rate >= 0) out.push({ icon: 'fas fa-rocket', name: 'Getting Started', color: '#f59e0b' });
+        else out.push({ icon: 'fas fa-triangle-exclamation', name: 'Overspent', color: '#ef4444' });
     }
-    if (s.withinBudget === true) out.push({ icon: '🎯', name: inProgress ? 'On Track' : 'Budget Master', color: '#6366f1' });
-    else if (s.withinBudget === false) out.push({ icon: '💸', name: 'Over Budget', color: '#ef4444' });
+    if (s.withinBudget === true) out.push({ icon: 'fas fa-bullseye', name: inProgress ? 'On Track' : 'Budget Master', color: '#6366f1' });
+    else if (s.withinBudget === false) out.push({ icon: 'fas fa-money-bill-wave', name: 'Over Budget', color: '#ef4444' });
     return out;
 }
 
@@ -103,7 +103,7 @@ function gradeOf(score) {
     return { name: 'Needs Work', color: '#ef4444' };
 }
 
-const badgeChip = (b) => `<span class="badge-chip" style="background:${b.color}22;color:${b.color}">${b.icon} ${esc(b.name)}</span>`;
+const badgeChip = (b) => `<span class="badge-chip" style="background:${b.color}22;color:${b.color}"><i class="${b.icon}"></i> ${esc(b.name)}</span>`;
 
 /* =========================================================
    RENDER SMART SAVER TAB
@@ -119,7 +119,7 @@ function renderSmart() {
 function renderScoreCard() {
     const sc = computeScore();
     if (!sc) {
-        $('score-card').innerHTML = `<div class="text-center text-xs text-gray-500 dark:text-gray-400 py-6"><div class="text-4xl mb-2">📊</div>Add a few entries to see your Savings Score.</div>`;
+        $('score-card').innerHTML = `<div class="text-center text-xs text-gray-500 dark:text-gray-400 py-6"><div class="text-4xl mb-2"><i class="fas fa-chart-column"></i></div>Add a few entries to see your Savings Score.</div>`;
         return;
     }
     const g = gradeOf(sc.total);
@@ -153,13 +153,13 @@ function renderMonthBadgeCard() {
     const main = badges[0];
     $('month-badge-card').innerHTML = `
         <div class="text-xs text-gray-500 dark:text-gray-400 mb-2">${monthLabel(ym)} badge</div>
-        ${main ? `<div class="text-center"><div class="text-5xl mb-1 badge-pop">${main.icon}</div><div class="text-lg font-bold" style="color:${main.color}">${esc(main.name)}</div>
+        ${main ? `<div class="text-center"><div class="text-5xl mb-1 badge-pop" style="color:${main.color}"><i class="${main.icon}"></i></div><div class="text-lg font-bold" style="color:${main.color}">${esc(main.name)}</div>
             <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">${s.rate !== null ? `You saved ${Math.round(s.rate)}% of your income (${inr0(s.savings)})` : ''}</div>
             <div class="mt-2 flex flex-wrap justify-center gap-1">${badges.slice(1).map(badgeChip).join('')}</div></div>`
-        : `<div class="text-center text-xs text-gray-500 dark:text-gray-400 py-4"><div class="text-4xl mb-2">🏅</div>Add your income and expenses to earn this month's badge.</div>`}
-        <div class="mt-3 text-center text-[11px] text-gray-500 dark:text-gray-400">🔥 Smart Saver streak: <b>${streak}</b> month(s)</div>
+        : `<div class="text-center text-xs text-gray-500 dark:text-gray-400 py-4"><div class="text-4xl mb-2"><i class="fas fa-medal"></i></div>Add your income and expenses to earn this month's badge.</div>`}
+        <div class="mt-3 text-center text-[11px] text-gray-500 dark:text-gray-400"><i class="fas fa-fire text-orange-500"></i> Smart Saver streak: <b>${streak}</b> month(s)</div>
         <div class="mt-3 text-[10px] text-gray-400 leading-relaxed border-t border-gray-200 dark:border-gray-700 pt-2">
-            🏅 Smart Saver: save 20%+ of income · 💎 Super Saver: 40%+ · 🎯 Budget Master: finish the month within your budgets</div>`;
+            <i class="fas fa-medal"></i> Smart Saver: save 20%+ of income · <i class="fas fa-gem"></i> Super Saver: 40%+ · <i class="fas fa-bullseye"></i> Budget Master: finish the month within your budgets</div>`;
 }
 
 function renderTargetCard() {
@@ -186,7 +186,7 @@ function renderTargetCard() {
             <div class="pbar-fill" style="width:${Math.min(pct, 100)}%;background:${pct >= 100 ? '#ef4444' : pct >= 80 ? '#f59e0b' : '#10b981'}"></div>
             ${levels.map(l => `<span class="tick" style="left:${l}%"><i>${l}%</i></span>`).join('')}
         </div>
-        <div class="flex flex-wrap gap-2 mt-6">${levels.map(l => `<span class="chip ${pct >= l ? 'chip-done' : ''}">${pct >= l ? '✓' : '○'} ${l}% ${pct >= l ? 'reached' : 'alert'}</span>`).join('')}</div>
+        <div class="flex flex-wrap gap-2 mt-6">${levels.map(l => `<span class="chip ${pct >= l ? 'chip-done' : ''}"><i class="fas ${pct >= l ? 'fa-check' : 'fa-circle'}"></i> ${l}% ${pct >= l ? 'reached' : 'alert'}</span>`).join('')}</div>
         <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-3">At this pace you will spend about <b>${inr0(projected)}</b> this month${projected > ov.limit ? ', which is above your target.' : ', which is within your target.'}</p>`;
 }
 
@@ -257,7 +257,7 @@ if ('serviceWorker' in navigator) {
 
 function notifStatus() {
     if (!('Notification' in window)) return { t: 'Notifications are not supported in this browser.', c: '#ef4444' };
-    if (Notification.permission === 'granted') return { t: '✓ Browser notifications are ON', c: '#10b981' };
+    if (Notification.permission === 'granted') return { t: 'Browser notifications are ON', c: '#10b981' };
     if (Notification.permission === 'denied') return { t: 'Blocked. Allow notifications for this site in your browser settings.', c: '#ef4444' };
     return { t: 'Not enabled yet. Click "Enable notifications".', c: '#f59e0b' };
 }
@@ -292,7 +292,7 @@ async function ackToday() {
 async function fireReminder() {
     const shown = await notify('Expense Tracker · Daily check-in', "Have you added today's entries? Tap to confirm.", 'daily-checkin', {
         requireInteraction: true,
-        actions: [{ action: 'ack', title: '✅ All added' }, { action: 'add', title: '➕ Add entry' }]
+        actions: [{ action: 'ack', title: 'All added' }, { action: 'add', title: 'Add entry' }]
     });
     if (shown) showToast("Reminder: have you added today's entries?", 'info');
     else openCheckin();      // notifications blocked or unsupported: show the popup instead
@@ -453,8 +453,8 @@ function confetti() {
 }
 
 window.goalReached = function (g) {
-    notify('🎉 Goal achieved!', `Congratulations! You saved ${inr0(g.target)} for "${g.name}".`, 'goal');
-    showResultModal('success', 'Congratulations! 🎉', `You reached your "${g.name}" goal of ${inr0(g.target)}. Time to enjoy it!`);
+    notify('Goal achieved!', `Congratulations! You saved ${inr0(g.target)} for "${g.name}".`, 'goal');
+    showResultModal('success', 'Congratulations!', `You reached your "${g.name}" goal of ${inr0(g.target)}. Time to enjoy it!`);
     confetti();
 };
 

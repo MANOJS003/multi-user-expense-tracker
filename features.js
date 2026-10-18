@@ -277,7 +277,7 @@ window.renderTransactionsTable = function () {
     updateSortHeaders();
 
     if (total === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="px-4 py-10 text-center text-gray-400 text-xs"><div class="text-3xl mb-2">🧾</div>No entries found. Tap <b>+</b> to add your first one.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="px-4 py-10 text-center text-gray-400 text-xs"><div class="text-3xl mb-2"><i class="fas fa-receipt"></i></div>No entries found. Tap <b>+</b> to add your first one.</td></tr>`;
         $('pagination-bar').innerHTML = '';
         return;
     }
@@ -349,7 +349,7 @@ function renderBudgets() {
     const ov = budgetsFor(ym).find(b => b.category === '__TOTAL__');
     if (!ov) {
         $('budget-overall').innerHTML = `<div class="rounded-xl border border-gray-200 dark:border-gray-700 p-5 text-center text-xs text-gray-500 dark:text-gray-400">
-            <div class="text-3xl mb-1">🎯</div>No overall budget set for the month.
+            <div class="text-3xl mb-1"><i class="fas fa-bullseye"></i></div>No overall budget set for the month.
             <div class="mt-3"><button onclick="openBudgetModal('__TOTAL__')" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium">Set Monthly Budget</button></div></div>`;
     } else {
         const pct = ov.limit ? total / ov.limit * 100 : 0, remaining = ov.limit - total;
@@ -493,7 +493,7 @@ function renderGoals() {
     const root = $('goal-list'); if (!root) return;
     renderGoalAlloc();
     if (!EXTRA.goals.length) {
-        root.innerHTML = `<div class="md:col-span-2 lg:col-span-3 rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center text-xs text-gray-500 dark:text-gray-400"><div class="text-4xl mb-2">🏆</div>No savings goals yet. Planning a mobile, a bike, a trip? Create a goal and set how much to allocate every month.</div>`;
+        root.innerHTML = `<div class="md:col-span-2 lg:col-span-3 rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center text-xs text-gray-500 dark:text-gray-400"><div class="text-4xl mb-2"><i class="fas fa-trophy"></i></div>No savings goals yet. Planning a mobile, a bike, a trip? Create a goal and set how much to allocate every month.</div>`;
         return;
     }
     const today = new Date(); today.setHours(0, 0, 0, 0);
@@ -515,7 +515,7 @@ function renderGoals() {
         const safeId = esc(g.id);
         return `<div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4 goal-card ${done ? 'goal-done' : ''}">
             <div class="flex items-start justify-between gap-2">
-                <div class="min-w-0"><h3 class="font-bold text-sm truncate">${esc(g.name)} ${done ? '🎉' : ''}</h3>
+                <div class="min-w-0"><h3 class="font-bold text-sm truncate">${esc(g.name)} ${done ? '<i class="fas fa-circle-check text-emerald-500"></i>' : ''}</h3>
                 <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">${esc(info) || 'No deadline'}</p></div>
                 <div class="shrink-0"><button onclick="openGoalModal('${safeId}')" class="p-1 text-blue-600" title="Edit"><i class="fas fa-edit"></i></button>
                 <button onclick="deleteGoal('${safeId}')" class="p-1 text-rose-600" title="Delete"><i class="fas fa-trash-alt"></i></button></div>
@@ -623,7 +623,7 @@ function nextDue(r) {
 function renderRecurring() {
     const root = $('recurring-list'); if (!root) return;
     if (!EXTRA.recurring.length) {
-        root.innerHTML = `<div class="md:col-span-2 rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center text-xs text-gray-500 dark:text-gray-400"><div class="text-4xl mb-2">🔁</div>No recurring entries yet. Add rent, subscriptions, EMIs or salary and they will be logged automatically every month.</div>`;
+        root.innerHTML = `<div class="md:col-span-2 rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center text-xs text-gray-500 dark:text-gray-400"><div class="text-4xl mb-2"><i class="fas fa-rotate"></i></div>No recurring entries yet. Add rent, subscriptions, EMIs or salary and they will be logged automatically every month.</div>`;
         return;
     }
     root.innerHTML = EXTRA.recurring.map(r => {
@@ -968,7 +968,9 @@ function calStep(delta) {
     if (currentFilterMode === 'month') {
         const [y, m] = getViewMonth().split('-').map(Number);
         const d = new Date(y, m - 1 + delta, 1);
-        $('filter-month-input').value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        const next = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        if (next > todayYM()) return;   // never page the filter into a future month
+        $('filter-month-input').value = next;
         applyFilters();
         return;
     }
@@ -1005,8 +1007,10 @@ function renderHeatmap() {
     const pager = currentFilterMode !== 'month';
     const pos = all.indexOf(months[0]);
     if ($('cal-prev')) $('cal-prev').disabled = pager && pos <= 0;
-    if ($('cal-next')) $('cal-next').disabled = pager && pos >= all.length - 1;
+    // In Month mode the next arrow stops at the current month; in paging mode it stops at the last available month.
+    if ($('cal-next')) $('cal-next').disabled = pager ? pos >= all.length - 1 : months[0] >= todayYM();
 
+    const today = toYMD(new Date());
     const head = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => `<div class="hm-head">${d}</div>`).join('');
     let html = '';
     months.forEach(ym => {
@@ -1017,6 +1021,11 @@ function renderHeatmap() {
         for (let i = 0; i < startDow; i++) html += '<div></div>';
         for (let d = 1; d <= daysIn(ym); d++) {
             const date = `${ym}-${String(d).padStart(2, '0')}`;
+            // Future dates have no data yet, so they are shown dimmed and are not selectable.
+            if (date > today) {
+                html += `<div class="hm-cell hm-out" title="${date}: upcoming">${d}</div>`;
+                continue;
+            }
             if (range && ((range.from && date < range.from) || (range.to && date > range.to))) {
                 html += `<div class="hm-cell hm-out">${d}</div>`;
                 continue;
