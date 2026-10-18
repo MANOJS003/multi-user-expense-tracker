@@ -886,23 +886,67 @@ function renderInsights() {
     renderHeatmap();
 }
 
+// Granularity of the trend chart: a single selected month (or a range inside one
+// calendar month) is shown day-by-day; anything wider is shown month-by-month.
+function trendGranularity() {
+    if (currentFilterMode === 'month') return 'day';
+    if (currentFilterMode === 'range') {
+        const a = $('filter-from-date').value, b = $('filter-to-date').value;
+        if (a && b && a.slice(0, 7) === b.slice(0, 7)) return 'day';
+    }
+    return 'month';
+}
+
+// Day-by-day window used when the trend chart is in 'day' granularity
+function trendDayRange() {
+    if (currentFilterMode === 'month') {
+        const ym = getViewMonth();
+        return { from: `${ym}-01`, to: `${ym}-${String(daysIn(ym)).padStart(2, '0')}` };
+    }
+    return { from: $('filter-from-date').value, to: $('filter-to-date').value };
+}
+
 function renderTrendChart() {
     const canvas = $('trend-chart'); if (!canvas) return;
-    // months follow the filter (see trendMonths), shown 4 at a time with prev / next paging
-    const all = trendMonths();
-    const pages = Math.max(1, Math.ceil(all.length / 4));
-    trendPage = Math.min(trendPage, pages - 1);
-    const end = all.length - trendPage * 4;
-    const months = all.slice(Math.max(0, end - 4), end);
-    const fmt = ym => new Date(ym + '-01T00:00:00').toLocaleDateString('en-IN', { month: 'short', year: '2-digit' });
-    const labels = months.map(fmt);
-    if ($('trend-label')) $('trend-label').textContent = months.length > 1 ? `${fmt(months[0])} - ${fmt(months[months.length - 1])}` : fmt(months[0]);
-    if ($('trend-prev')) $('trend-prev').disabled = trendPage >= pages - 1;
-    if ($('trend-next')) $('trend-next').disabled = trendPage === 0;
-    const src = currentFilterMode === 'month' ? transactions : getFilteredTransactions();
-    const sumOf = (ym, type) => src.filter(t => t.type === type && dOf(t).startsWith(ym)).reduce((s, t) => s + Number(t.amount), 0);
-    const inc = months.map(ym => sumOf(ym, 'INCOME'));
-    const exp = months.map(ym => sumOf(ym, 'EXPENSE'));
+    const src = getFilteredTransactions();   // the chart always reflects the active filter
+    const gran = trendGranularity();
+    let labels, inc, exp, labelText;
+
+    if (gran === 'day') {
+        // one point per day of the selected month / range - no paging needed
+        const { from, to } = trendDayRange();
+        const days = [];
+        if (from && to) {
+            for (let d = new Date(from + 'T00:00:00'), end = new Date(to + 'T00:00:00'); d <= end; d.setDate(d.getDate() + 1)) {
+                days.push(toYMD(d));
+            }
+        }
+        const fmt = ds => new Date(ds + 'T00:00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+        labels = days.map(fmt);
+        labelText = days.length ? (days.length > 1 ? `${fmt(days[0])} - ${fmt(days[days.length - 1])}` : fmt(days[0])) : '';
+        const sumOf = (ds, type) => src.filter(t => t.type === type && dOf(t) === ds).reduce((s, t) => s + Number(t.amount), 0);
+        inc = days.map(ds => sumOf(ds, 'INCOME'));
+        exp = days.map(ds => sumOf(ds, 'EXPENSE'));
+        if ($('trend-prev')) $('trend-prev').disabled = true;
+        if ($('trend-next')) $('trend-next').disabled = true;
+    } else {
+        // months bounded to the active filter (see heatmapMonths), shown 4 at a time with prev / next paging
+        const all = heatmapMonths();
+        const pages = Math.max(1, Math.ceil(all.length / 4));
+        trendPage = Math.min(trendPage, pages - 1);
+        const end = all.length - trendPage * 4;
+        const months = all.slice(Math.max(0, end - 4), end);
+        const fmt = ym => new Date(ym + '-01T00:00:00').toLocaleDateString('en-IN', { month: 'short', year: '2-digit' });
+        labels = months.map(fmt);
+        labelText = months.length > 1 ? `${fmt(months[0])} - ${fmt(months[months.length - 1])}` : fmt(months[0]);
+        const sumOf = (ym, type) => src.filter(t => t.type === type && dOf(t).startsWith(ym)).reduce((s, t) => s + Number(t.amount), 0);
+        inc = months.map(ym => sumOf(ym, 'INCOME'));
+        exp = months.map(ym => sumOf(ym, 'EXPENSE'));
+        if ($('trend-prev')) $('trend-prev').disabled = trendPage >= pages - 1;
+        if ($('trend-next')) $('trend-next').disabled = trendPage === 0;
+    }
+
+    if ($('trend-label')) $('trend-label').textContent = labelText;
     if (trendChartInstance) trendChartInstance.destroy();
     trendChartInstance = new Chart(canvas.getContext('2d'), {
         type: 'line',
@@ -952,15 +996,6 @@ function heatmapMonths() {
         list = monthsBetween(ds.length ? ds[0].slice(0, 7) : todayYM(), todayYM()).slice(-12);
     }
     return list.length ? list : [todayYM()];
-}
-
-// Months available in the trend chart: 12 months up to the selected month, otherwise the filter's months
-function trendMonths() {
-    if (currentFilterMode === 'month') {
-        const [y, m] = getViewMonth().split('-').map(Number);
-        return monthsBetween(toYMD(new Date(y, m - 12, 1)).slice(0, 7), `${y}-${String(m).padStart(2, '0')}`);
-    }
-    return heatmapMonths();
 }
 
 // Calendar arrows: in Month mode they move the filter month; otherwise they page through the months one at a time
