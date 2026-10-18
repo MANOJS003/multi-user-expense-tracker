@@ -223,9 +223,8 @@ window.renderTransactionsTable = function () {
     const catVal = $('table-category-filter').value;
 
     let rows = getFilteredTransactions()
-        .filter(t => (t.description || '').toLowerCase().includes(searchVal) || (t.category || '').toLowerCase().includes(searchVal))
+        .filter(t => String(t.description || '').toLowerCase().includes(searchVal) || String(t.category || '').toLowerCase().includes(searchVal))
         .filter(t => (typeVal === 'ALL' || t.type === typeVal) && (catVal === 'ALL' || t.category === catVal));
-
     const { key, dir } = tableSort;
     rows.sort((a, b) => {
         let r = key === 'amount' ? Number(a.amount) - Number(b.amount)
