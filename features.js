@@ -98,9 +98,29 @@ async function loadExtras() {
         EXTRA.settings = d.settings || {};
         extrasLoadedFor = userSessionEmail;
         applyCustomCategories();
+        applyRecGoalLinks();
     } catch (e) { console.error('Extras load failed', e); }
     renderBudgets(); renderGoals(); renderRecurring();
     if (window.onExtrasLoaded) window.onExtrasLoaded();
+}
+
+// The Recurring sheet (excel.gs) has no goal_id/goal_amount columns, so the
+// link between a recurring entry and a savings goal is stored instead as a
+// plain key/value setting ("recgoal_<recurringId>" = "<goalId>:<amount>")
+// using the existing set_setting action. This merges that link back onto
+// each EXTRA.recurring item after (re)loading from the sheet.
+function applyRecGoalLinks() {
+    EXTRA.recurring.forEach(r => {
+        const raw = EXTRA.settings['recgoal_' + r.id];
+        if (raw) {
+            const [gid, amt] = raw.split(':');
+            r.goal_id = gid || '';
+            r.goal_amount = Number(amt) || 0;
+        } else {
+            r.goal_id = r.goal_id || '';
+            r.goal_amount = r.goal_amount || 0;
+        }
+    });
 }
 
 const _fetchTx = window.fetchTransactionsFromSheet;
@@ -118,6 +138,20 @@ window.refreshAppView = function () {
     renderBudgets(); renderGoals(); renderRecurring();
     setTimeout(checkBudgetAlerts, 700);
 };
+
+/* =========================================================
+   ADD CHOICE (Data Entry vs Set Recurring for Goal)
+   ========================================================= */
+function openAddChoiceModal() { openModal('add-choice-modal'); }
+function chooseDataEntry() { closeModal('add-choice-modal'); openEntryModal(); }
+function chooseRecurringGoal() {
+    closeModal('add-choice-modal');
+    if (!EXTRA.goals.length) {
+        showToast('Create a savings goal first (Goals tab), then set up recurring saving.', 'error');
+        return;
+    }
+    openGoalRecurringModal();
+}
 
 const _switchTab = window.switchTab;
 window.switchTab = function (name) {
@@ -518,6 +552,8 @@ function openGoalModal(id) {
     $('goal-name').value = g ? g.name : '';
     $('goal-target').value = g ? g.target : '';
     $('goal-saved').value = g ? g.saved : 0;
+    // A savings goal deadline only makes sense in the future, so block past dates here.
+    $('goal-deadline').min = toYMD(new Date());
     $('goal-deadline').value = g ? g.deadline : '';
     $('goal-monthly').value = g && g.monthly ? g.monthly : '';
     openModal('goal-modal');
@@ -594,17 +630,19 @@ function renderRecurring() {
         const paused = r.active === 'no';
         const inc = r.type === 'INCOME';
         const id = esc(r.id);
+        const goal = r.goal_id ? EXTRA.goals.find(g => g.id == r.goal_id) : null;
         return `<div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4 ${paused ? 'opacity-60' : ''}">
             <div class="flex items-start justify-between gap-2">
                 <div class="min-w-0"><div class="font-semibold text-sm truncate">${esc(r.description) || esc(r.category)}</div>
                 <div class="text-[11px] text-gray-500 dark:text-gray-400">${esc(r.category)} · every month on day ${r.day}</div></div>
                 <div class="text-right font-bold ${inc ? 'text-emerald-600' : 'text-rose-600'}">${inc ? '+' : '-'}${inr0(r.amount)}</div>
             </div>
+            ${goal ? `<div class="text-[11px] text-indigo-600 dark:text-indigo-300 mt-1"><i class="fas fa-piggy-bank mr-1"></i>Auto-saves ${inr0(r.goal_amount)} to "${esc(goal.name)}"</div>` : ''}
             <div class="flex items-center justify-between mt-3 text-[11px]">
                 <span class="text-gray-500 dark:text-gray-400">${paused ? 'Paused' : 'Next: ' + nextDue(r).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                 <span>
                     <button onclick="toggleRecurring('${id}')" class="text-amber-600 hover:underline">${paused ? 'Resume' : 'Pause'}</button> ·
-                    <button onclick="openRecurringModal('${id}')" class="text-blue-600 hover:underline">Edit</button> ·
+                    <button onclick="${goal ? `openGoalRecurringModal('${id}')` : `openRecurringModal('${id}')`}" class="text-blue-600 hover:underline">Edit</button> ·
                     <button onclick="deleteRecurring('${id}')" class="text-rose-500 hover:underline">Delete</button>
                 </span>
             </div></div>`;
@@ -649,6 +687,54 @@ $('recurring-form').addEventListener('submit', async (e) => {
     showToast('Recurring entry saved!', 'success');
     await sendToSheet({ action: 'rec_save', ...rec });
 });
+
+/* ---------- dedicated: Recurring entry that auto-saves into a Goal ---------- */
+function updateGoalRecOptions(selected) {
+    const sel = $('goalrec-goal'); if (!sel) return;
+    sel.innerHTML = EXTRA.goals.map(g => `<option value="${esc(g.id)}">${esc(g.name)}</option>`).join('') || '<option value="">No goals yet — create one first</option>';
+    sel.value = selected || '';
+}
+function openGoalRecurringModal(id) {
+    const r = id ? EXTRA.recurring.find(x => x.id == id) : null;
+    $('goalrec-modal-title').innerHTML = `<i class="fas fa-piggy-bank text-indigo-500"></i>${r ? 'Edit Recurring for Goal' : 'New Recurring for Goal'}`;
+    $('goalrec-id').value = r ? r.id : '';
+    updateGoalRecOptions(r ? r.goal_id : '');
+    $('goalrec-day').value = r ? r.day : new Date().getDate();
+    $('goalrec-amount').value = r ? (r.goal_amount || r.amount) : '';
+    openModal('goal-recurring-modal');
+}
+$('goal-recurring-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = $('goalrec-id').value;
+    const old = EXTRA.recurring.find(x => x.id == id);
+    const goalId = $('goalrec-goal').value;
+    const goal = EXTRA.goals.find(g => g.id == goalId);
+    if (!goalId || !goal) { showToast('Choose a savings goal first.', 'error'); return; }
+    const amount = parseFloat($('goalrec-amount').value);
+    if (!(amount > 0)) return;
+    const day = Math.min(31, Math.max(1, parseInt($('goalrec-day').value) || 1));
+    const rec = {
+        id: id || uid('r'),
+        type: 'EXPENSE',
+        category: 'Other Expense',
+        amount,
+        description: `Savings: ${goal.name}`,
+        day,
+        last_run: old ? old.last_run : (day <= new Date().getDate() ? todayYM() : ''),
+        active: old ? old.active : 'yes',
+        goal_id: goalId,
+        goal_amount: amount
+    };
+    EXTRA.recurring = EXTRA.recurring.filter(x => x.id != rec.id).concat(rec);
+    closeModal('goal-recurring-modal');
+    renderRecurring();
+    showToast('Recurring goal saving set up!', 'success');
+    await sendToSheet({ action: 'rec_save', id: rec.id, type: rec.type, category: rec.category, amount: rec.amount, description: rec.description, day: rec.day, last_run: rec.last_run, active: rec.active });
+    const settingKey = 'recgoal_' + rec.id;
+    const settingVal = `${goalId}:${amount}`;
+    EXTRA.settings[settingKey] = settingVal;
+    await sendToSheet({ action: 'set_setting', key: settingKey, value: settingVal });
+});
 async function toggleRecurring(id) {
     const r = EXTRA.recurring.find(x => x.id == id); if (!r) return;
     r.active = r.active === 'no' ? 'yes' : 'no';
@@ -661,6 +747,11 @@ async function deleteRecurring(id) {
     EXTRA.recurring = EXTRA.recurring.filter(x => x.id != id);
     renderRecurring();
     await sendToSheet({ action: 'rec_delete', id });
+    const settingKey = 'recgoal_' + id;
+    if (EXTRA.settings[settingKey]) {
+        delete EXTRA.settings[settingKey];
+        await sendToSheet({ action: 'set_setting', key: settingKey, value: '' });
+    }
 }
 
 // Adds due recurring entries (runs once after login)
@@ -668,6 +759,7 @@ async function processRecurring() {
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const endIdx = today.getFullYear() * 12 + today.getMonth();
     const toAdd = [], changed = [];
+    const goalCredits = {}; // goal_id -> total ₹ to add from occurrences fired this run
     let n = 0;
     EXTRA.recurring.filter(r => r.active !== 'no').forEach(r => {
         let startIdx = endIdx;
@@ -676,7 +768,7 @@ async function processRecurring() {
             startIdx = ly * 12 + (lm - 1) + 1;
         }
         startIdx = Math.max(startIdx, endIdx - 24);
-        let last = null;
+        let last = null, occurrences = 0;
         for (let i = startIdx; i <= endIdx; i++) {
             const yy = Math.floor(i / 12), mm = i % 12;
             const day = Math.min(r.day, new Date(yy, mm + 1, 0).getDate());
@@ -684,19 +776,40 @@ async function processRecurring() {
             if (date > today) break;
             toAdd.push({ id: uid('rec') + (n++), date: toYMD(date), type: r.type, category: r.category, amount: r.amount, description: r.description || r.category });
             last = i;
+            occurrences++;
         }
         if (last !== null) {
             r.last_run = `${Math.floor(last / 12)}-${String((last % 12) + 1).padStart(2, '0')}`;
             changed.push(r);
+            if (r.goal_id && r.goal_amount > 0) {
+                goalCredits[r.goal_id] = (goalCredits[r.goal_id] || 0) + r.goal_amount * occurrences;
+            }
         }
     });
     if (!toAdd.length) return;
     await sendToSheet({ action: 'bulk_add', rows: toAdd });
-    for (const r of changed) await sendToSheet({ action: 'rec_save', ...r });
+    for (const r of changed) await sendToSheet({ action: 'rec_save', id: r.id, type: r.type, category: r.category, amount: r.amount, description: r.description, day: r.day, last_run: r.last_run, active: r.active });
+
+    // Credit any savings goals linked to the recurring entries that just fired.
+    const goalsHit = [];
+    Object.keys(goalCredits).forEach(goalId => {
+        const g = EXTRA.goals.find(x => x.id == goalId);
+        if (!g) return;
+        const wasDone = g.saved >= g.target;
+        g.saved += goalCredits[goalId];
+        goalsHit.push({ g, wasDone, amount: goalCredits[goalId] });
+    });
+    for (const { g } of goalsHit) await sendToSheet({ action: 'goal_save', ...g });
+
     await new Promise(r => setTimeout(r, 2000));
     await _fetchTx();
     renderRecurring();
+    renderGoals();
     showToast(`${toAdd.length} recurring ${toAdd.length === 1 ? 'entry was' : 'entries were'} added automatically`, 'info');
+    goalsHit.forEach(({ g, wasDone, amount }) => {
+        if (!wasDone && g.saved >= g.target && window.goalReached) goalReached(g);
+        else showToast(`${inr0(amount)} auto-allocated to ${g.name}`, 'success');
+    });
 }
 
 /* =========================================================

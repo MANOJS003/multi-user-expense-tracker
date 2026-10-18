@@ -218,10 +218,15 @@ function setupDefaultDates() {
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
+    const today = toYMD(now);
     document.getElementById('filter-month-input').value = `${year}-${month}`;
-    document.getElementById('entry-date').value = toYMD(now);
+    document.getElementById('entry-date').value = today;
+    // Expenses/income can only be logged for today or earlier, never for a future date.
+    document.getElementById('entry-date').max = today;
     document.getElementById('filter-from-date').value = `${year}-${month}-01`;
+    document.getElementById('filter-from-date').max = today;
     document.getElementById('filter-to-date').value = toYMD(new Date(year, now.getMonth() + 1, 0));
+    document.getElementById('filter-to-date').max = today;
 }
 
 function switchTab(tabName) {

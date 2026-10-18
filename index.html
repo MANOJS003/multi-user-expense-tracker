@@ -205,7 +205,7 @@
                             <span class="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-1">Total Income</span>
                             <div class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white" id="card-total-income">₹0.00</div>
                         </div>
-                        <div class="p-2.5 bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 rounded-lg shrink-0"><i class="fas fa-arrow-down-left text-sm sm:text-base"></i></div>
+                        <div class="p-2.5 bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 rounded-lg shrink-0"><i class="fas fa-sack-dollar text-sm sm:text-base"></i></div>
                     </div>
 
                     <div class="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 border border-gray-200 dark:border-gray-700 shadow-xs relative overflow-hidden flex items-center justify-between">
@@ -214,7 +214,7 @@
                             <span class="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-1">Total Expenses</span>
                             <div class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white" id="card-total-expense">₹0.00</div>
                         </div>
-                        <div class="p-2.5 bg-rose-100 dark:bg-rose-950/50 text-rose-600 rounded-lg shrink-0"><i class="fas fa-arrow-up-right text-sm sm:text-base"></i></div>
+                        <div class="p-2.5 bg-rose-100 dark:bg-rose-950/50 text-rose-600 rounded-lg shrink-0"><i class="fas fa-receipt text-sm sm:text-base"></i></div>
                     </div>
 
                     <div class="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 border border-gray-200 dark:border-gray-700 shadow-xs relative overflow-hidden flex items-center justify-between sm:col-span-2 lg:col-span-1">
@@ -367,7 +367,7 @@
             <div id="view-recurring" class="tab-view hidden space-y-4 sm:space-y-6">
                 <div class="flex items-center justify-between gap-2">
                     <div><h2 class="text-base font-bold">Recurring Entries</h2><p class="text-xs text-gray-500 dark:text-gray-400">Added automatically when you open the app on or after the due day</p></div>
-                    <button onclick="openRecurringModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium"><i class="fas fa-plus mr-1"></i>New</button>
+                    <button onclick="openAddChoiceModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium"><i class="fas fa-plus mr-1"></i>New</button>
                 </div>
                 <div id="recurring-list" class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4"></div>
             </div>
@@ -379,6 +379,25 @@
     </div>
 
     <!-- MODALS -->
+    <!-- ADD CHOICE MODAL -->
+    <div id="add-choice-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs hidden p-3">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-xs p-5 shadow-2xl text-center border border-gray-200 dark:border-gray-700">
+            <h3 class="text-sm font-bold mb-1">What do you want to add?</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">Choose an option below.</p>
+            <div class="space-y-2">
+                <button onclick="chooseDataEntry()" class="w-full flex items-center gap-3 p-3 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition text-left">
+                    <span class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 text-base shrink-0"><i class="fas fa-receipt"></i></span>
+                    <span><span class="block text-xs font-semibold">Data Entry</span><span class="block text-[11px] text-gray-500 dark:text-gray-400">Add a one-time income or expense</span></span>
+                </button>
+                <button onclick="chooseRecurringGoal()" class="w-full flex items-center gap-3 p-3 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition text-left">
+                    <span class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 text-base shrink-0"><i class="fas fa-piggy-bank"></i></span>
+                    <span><span class="block text-xs font-semibold">Set Recurring for Goal</span><span class="block text-[11px] text-gray-500 dark:text-gray-400">Auto-save towards a goal every month</span></span>
+                </button>
+            </div>
+            <button type="button" onclick="closeModal('add-choice-modal')" class="w-full mt-3 text-gray-500 dark:text-gray-400 py-1.5 rounded-lg text-xs">Cancel</button>
+        </div>
+    </div>
+
     <!-- ENTRY MODAL -->
     <div id="entry-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs hidden p-3 sm:p-4">
         <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md p-5 shadow-2xl border border-gray-200 dark:border-gray-700 max-h-[90vh] overflow-y-auto">
@@ -564,6 +583,26 @@
                 <div class="flex gap-2 pt-1">
                     <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg text-xs">Save</button>
                     <button type="button" onclick="closeModal('recurring-modal')" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-xs">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- GOAL RECURRING MODAL (dedicated form: auto-save into a goal every month) -->
+    <div id="goal-recurring-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs hidden p-3">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-sm p-5 shadow-2xl border border-gray-200 dark:border-gray-700 max-h-[90vh] overflow-y-auto">
+            <h3 id="goalrec-modal-title" class="text-sm font-bold mb-1 flex items-center gap-1.5"><i class="fas fa-piggy-bank text-indigo-500"></i>New Recurring for Goal</h3>
+            <p class="text-[11px] text-gray-500 dark:text-gray-400 mb-3">Automatically moves money into a savings goal every month.</p>
+            <form id="goal-recurring-form" class="space-y-3">
+                <input type="hidden" id="goalrec-id">
+                <div><label class="lbl">Savings Goal</label><select id="goalrec-goal" required class="fld"></select></div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div><label class="lbl">Day of month</label><input type="number" id="goalrec-day" min="1" max="31" required class="fld"></div>
+                    <div><label class="lbl">Amount (₹)</label><input type="number" id="goalrec-amount" min="0.01" step="0.01" required placeholder="e.g. 2000" class="fld"></div>
+                </div>
+                <div class="flex gap-2 pt-1">
+                    <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 rounded-lg text-xs">Save</button>
+                    <button type="button" onclick="closeModal('goal-recurring-modal')" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-xs">Cancel</button>
                 </div>
             </form>
         </div>
