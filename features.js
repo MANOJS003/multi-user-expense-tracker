@@ -99,6 +99,7 @@ async function loadExtras() {
         extrasLoadedFor = userSessionEmail;
         applyCustomCategories();
         applyRecGoalLinks();
+        applyGoalArchiveFlags();
     } catch (e) { console.error('Extras load failed', e); }
     renderBudgets(); renderGoals(); renderRecurring();
     if (window.onExtrasLoaded) window.onExtrasLoaded();
@@ -121,6 +122,15 @@ function applyRecGoalLinks() {
             r.goal_amount = r.goal_amount || 0;
         }
     });
+}
+
+// The Goals sheet (excel.gs) has no "archived" column either, so "archiving" a goal
+// (hiding it from the active list/allocation planning without deleting its data) is
+// stored the same way, as a plain key/value setting ("goalarch_<goalId>" = "1") via the
+// existing generic set_setting action. No excel.gs changes needed. This merges that flag
+// back onto each EXTRA.goals item after (re)loading from the sheet.
+function applyGoalArchiveFlags() {
+    EXTRA.goals.forEach(g => { g.archived = EXTRA.settings['goalarch_' + g.id] === '1'; });
 }
 
 const _fetchTx = window.fetchTransactionsFromSheet;
@@ -415,7 +425,7 @@ $('budget-form').addEventListener('submit', async (e) => {
     const category = $('budget-category').value;
     const limit = parseFloat($('budget-limit').value);
     const month = $('budget-form').dataset.month || todayYM();
-    if (!(limit > 0)) return;
+    if (!(limit > 0)) { showToast('Monthly limit must be a positive number greater than 0.', 'error'); return; }
     EXTRA.budgets = EXTRA.budgets.filter(b => !(b.category === category && (b.month || '') === month));
     EXTRA.budgets.push({ category, limit, month });
     closeModal('budget-modal');
@@ -477,7 +487,7 @@ function goalEta(g) {
 
 function renderGoalAlloc() {
     const el = $('goal-alloc-summary'); if (!el) return;
-    const active = EXTRA.goals.filter(g => g.saved < g.target && g.monthly > 0);
+    const active = EXTRA.goals.filter(g => !g.archived && g.saved < g.target && g.monthly > 0);
     if (!active.length) { el.innerHTML = ''; return; }
     const planned = active.reduce((s, g) => s + g.monthly, 0);
     const ym = todayYM();
@@ -490,6 +500,9 @@ function renderGoalAlloc() {
         <span class="${ok ? 'text-emerald-600' : 'text-amber-600'} font-semibold">${ok ? 'This month\'s savings (' + inr0(saved) + ') cover it' : 'This month\'s savings so far: ' + inr0(saved) + ' (short by ' + inr0(planned - saved) + ')'}</span></div>`;
 }
 
+let goalArchiveOpen = false;
+function toggleGoalArchiveSection() { goalArchiveOpen = !goalArchiveOpen; renderGoals(); }
+
 function renderGoals() {
     const root = $('goal-list'); if (!root) return;
     renderGoalAlloc();
@@ -498,7 +511,10 @@ function renderGoals() {
         return;
     }
     const today = new Date(); today.setHours(0, 0, 0, 0);
-    root.innerHTML = EXTRA.goals.map(g => {
+    const activeGoals = EXTRA.goals.filter(g => !g.archived);
+    const archivedGoals = EXTRA.goals.filter(g => g.archived);
+
+    const goalCard = g => {
         const pct = g.target ? Math.min(100, g.saved / g.target * 100) : 0;
         const done = g.saved >= g.target;
         let info = '';
@@ -512,26 +528,47 @@ function renderGoals() {
                 info = `${days} day(s) left · save ${inr0(remaining / months)} / month`;
             }
         }
-        const eta = goalEta(g);
+        const eta = !g.archived ? goalEta(g) : '';
         const safeId = esc(g.id);
-        return `<div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4 goal-card ${done ? 'goal-done' : ''}">
+        const actions = g.archived
+            ? `<button onclick="unarchiveGoal('${safeId}')" class="p-1 text-emerald-600" title="Restore"><i class="fas fa-box-open"></i></button>
+                <button onclick="deleteGoal('${safeId}')" class="p-1 text-rose-600" title="Delete"><i class="fas fa-trash-alt"></i></button>`
+            : `<button onclick="openGoalModal('${safeId}')" class="p-1 text-blue-600" title="Edit"><i class="fas fa-edit"></i></button>
+                <button onclick="archiveGoal('${safeId}')" class="p-1 text-amber-600" title="Archive"><i class="fas fa-box-archive"></i></button>
+                <button onclick="deleteGoal('${safeId}')" class="p-1 text-rose-600" title="Delete"><i class="fas fa-trash-alt"></i></button>`;
+        return `<div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4 goal-card ${done ? 'goal-done' : ''} ${g.archived ? 'opacity-60' : ''}">
             <div class="flex items-start justify-between gap-2">
                 <div class="min-w-0"><h3 class="font-bold text-sm truncate">${esc(g.name)} ${done ? '<i class="fas fa-circle-check text-emerald-500"></i>' : ''}</h3>
-                <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">${esc(info) || 'No deadline'}</p></div>
-                <div class="shrink-0"><button onclick="openGoalModal('${safeId}')" class="p-1 text-blue-600" title="Edit"><i class="fas fa-edit"></i></button>
-                <button onclick="deleteGoal('${safeId}')" class="p-1 text-rose-600" title="Delete"><i class="fas fa-trash-alt"></i></button></div>
+                <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">${g.archived ? 'Archived' : (esc(info) || 'No deadline')}</p></div>
+                <div class="shrink-0">${actions}</div>
             </div>
             <div class="flex items-center gap-4 mt-3">
                 <div class="goal-ring" style="--p:${pct.toFixed(1)}"><span>${Math.round(pct)}%</span></div>
                 <div class="text-xs"><div class="font-bold text-base">${inr0(g.saved)}</div><div class="text-gray-500 dark:text-gray-400">of ${inr0(g.target)}</div></div>
             </div>
             ${eta ? `<p class="text-[11px] text-indigo-600 dark:text-indigo-300 mt-2">${esc(eta)}</p>` : ''}
-            <div class="flex gap-2 mt-3">
+            ${!g.archived ? `<div class="flex gap-2 mt-3">
                 ${!done && g.monthly > 0 ? `<button onclick="allocateMonthly('${safeId}')" class="flex-1 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium"><i class="fas fa-piggy-bank mr-1"></i>Allocate ${inr0(g.monthly)}</button>` : ''}
                 <button onclick="openContribModal('${safeId}')" class="flex-1 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-xs font-medium"><i class="fas fa-plus mr-1"></i>Custom amount</button>
-            </div>
+            </div>` : ''}
         </div>`;
-    }).join('');
+    };
+
+    let html = activeGoals.length
+        ? activeGoals.map(goalCard).join('')
+        : `<div class="md:col-span-2 lg:col-span-3 rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center text-xs text-gray-500 dark:text-gray-400"><div class="text-4xl mb-2"><i class="fas fa-trophy"></i></div>No active goals. Create a new one, or restore one from Archived below.</div>`;
+
+    if (archivedGoals.length) {
+        html += `<div class="md:col-span-2 lg:col-span-3">
+            <button onclick="toggleGoalArchiveSection()" class="w-full flex items-center justify-between gap-2 text-xs font-semibold text-gray-500 dark:text-gray-400 py-2 border-t border-gray-200 dark:border-gray-700 mt-1">
+                <span><i class="fas fa-box-archive mr-1.5"></i>Archived goals (${archivedGoals.length})</span>
+                <i class="fas fa-chevron-${goalArchiveOpen ? 'up' : 'down'}"></i>
+            </button>
+        </div>`;
+        if (goalArchiveOpen) html += archivedGoals.map(goalCard).join('');
+    }
+
+    root.innerHTML = html;
 }
 
 async function allocateMonthly(id) {
@@ -572,7 +609,8 @@ $('goal-form').addEventListener('submit', async (e) => {
         monthly: parseFloat($('goal-monthly').value) || 0,
         created: old ? old.created : toYMD(new Date())
     };
-    if (!goal.name || !(goal.target > 0)) return;
+    if (!goal.name || !(goal.target > 0)) { showToast('Enter a goal name and a target amount greater than 0.', 'error'); return; }
+    if (goal.saved < 0 || goal.monthly < 0) { showToast('Saved amount and monthly allocation cannot be negative.', 'error'); return; }
     EXTRA.goals = EXTRA.goals.filter(x => x.id != goal.id).concat(goal);
     closeModal('goal-modal');
     renderGoals();
@@ -587,6 +625,29 @@ async function deleteGoal(id) {
     renderGoals();
     showToast('Goal deleted', 'info');
     await sendToSheet({ action: 'goal_delete', id });
+    await sendToSheet({ action: 'set_setting', key: 'goalarch_' + id, value: '' });
+}
+
+// Archiving/restoring a goal never touches the Goals sheet row (so no excel.gs changes
+// are needed) - it's just a flag in the generic Settings key/value store, same mechanism
+// already used to link recurring entries to goals (see applyRecGoalLinks above).
+async function archiveGoal(id) {
+    const g = EXTRA.goals.find(x => x.id == id); if (!g) return;
+    const ok = await showConfirmModal('Archive Goal?', `"${g.name}" will be hidden from your active goals and monthly allocation planning. You can restore it anytime from Archived goals.`, 'Yes, Archive', 'fas fa-box-archive');
+    if (!ok) return;
+    g.archived = true;
+    EXTRA.settings['goalarch_' + id] = '1';
+    renderGoals();
+    showToast(`${g.name} archived`, 'info');
+    await sendToSheet({ action: 'set_setting', key: 'goalarch_' + id, value: '1' });
+}
+async function unarchiveGoal(id) {
+    const g = EXTRA.goals.find(x => x.id == id); if (!g) return;
+    g.archived = false;
+    EXTRA.settings['goalarch_' + id] = '';
+    renderGoals();
+    showToast(`${g.name} restored`, 'success');
+    await sendToSheet({ action: 'set_setting', key: 'goalarch_' + id, value: '' });
 }
 function openContribModal(id) {
     const g = EXTRA.goals.find(x => x.id == id); if (!g) return;
@@ -681,7 +742,7 @@ $('recurring-form').addEventListener('submit', async (e) => {
         last_run: old ? old.last_run : (day <= new Date().getDate() ? todayYM() : ''),
         active: old ? old.active : 'yes'
     };
-    if (!(rec.amount > 0)) return;
+    if (!(rec.amount > 0)) { showToast('Amount must be a positive number greater than 0.', 'error'); return; }
     EXTRA.recurring = EXTRA.recurring.filter(x => x.id != rec.id).concat(rec);
     closeModal('recurring-modal');
     renderRecurring();
@@ -692,7 +753,8 @@ $('recurring-form').addEventListener('submit', async (e) => {
 /* ---------- dedicated: Recurring entry that auto-saves into a Goal ---------- */
 function updateGoalRecOptions(selected) {
     const sel = $('goalrec-goal'); if (!sel) return;
-    sel.innerHTML = EXTRA.goals.map(g => `<option value="${esc(g.id)}">${esc(g.name)}</option>`).join('') || '<option value="">No goals yet — create one first</option>';
+    const pickable = EXTRA.goals.filter(g => !g.archived);
+    sel.innerHTML = pickable.map(g => `<option value="${esc(g.id)}">${esc(g.name)}</option>`).join('') || '<option value="">No goals yet — create one first</option>';
     sel.value = selected || '';
 }
 function openGoalRecurringModal(id) {
@@ -712,7 +774,7 @@ $('goal-recurring-form').addEventListener('submit', async (e) => {
     const goal = EXTRA.goals.find(g => g.id == goalId);
     if (!goalId || !goal) { showToast('Choose a savings goal first.', 'error'); return; }
     const amount = parseFloat($('goalrec-amount').value);
-    if (!(amount > 0)) return;
+    if (!(amount > 0)) { showToast('Amount must be a positive number greater than 0.', 'error'); return; }
     const day = Math.min(31, Math.max(1, parseInt($('goalrec-day').value) || 1));
     const rec = {
         id: id || uid('r'),

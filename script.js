@@ -220,16 +220,57 @@ function setupDefaultDates() {
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const today = toYMD(now);
     document.getElementById('filter-month-input').value = `${year}-${month}`;
-    // The month filter can never be pushed into a future month.
-    document.getElementById('filter-month-input').max = `${year}-${month}`;
     document.getElementById('entry-date').value = today;
-    // Expenses/income can only be logged for today or earlier, never for a future date.
-    document.getElementById('entry-date').max = today;
     document.getElementById('filter-from-date').value = `${year}-${month}-01`;
-    document.getElementById('filter-from-date').max = today;
     document.getElementById('filter-to-date').value = toYMD(new Date(year, now.getMonth() + 1, 0));
-    document.getElementById('filter-to-date').max = today;
+    refreshDateMaxes();
 }
+
+// NOTE on future-date prevention: the HTML max attribute only disables dates inside the
+// browser's OWN picker widget, and that widget is implemented differently per platform.
+// Desktop Chrome (and its DevTools "mobile view", which just resizes the SAME desktop
+// picker) strictly greys out/disables anything past max. Many real mobile OS pickers
+// (older Android WebViews, some iOS Safari versions, in-app browsers, Samsung Internet,
+// etc.) are known to ignore max/min in their native wheel/calendar UI and let the user
+// scroll to and confirm a future date anyway - it only marks the field :invalid, which a
+// hand-rolled submit handler (one that calls e.preventDefault() and never checks
+// checkValidity()) will happily ignore. That is why this bug only shows up on real
+// devices after deployment: it was never actually blocked by max alone, local/dev
+// testing just happened to use a picker implementation that behaves strictly.
+//
+// Fix has two layers:
+//   1) Recompute and (re)apply max live - at load, whenever the entry modal opens, and
+//      whenever the app regains visibility (a PWA/tab can be left open across midnight,
+//      making a stale max captured at page-load time wrong).
+//   2) Never trust the native picker UI or the max attribute alone - explicitly compare
+//      the chosen date string against today in JS before the entry is ever sent (see the
+//      transaction-form submit handler below), since <input type="date">.value is always
+//      normalized to ISO yyyy-MM-dd regardless of device locale, so plain string
+//      comparison against toYMD(new Date()) is reliable cross-platform.
+function refreshDateMaxes() {
+    const today = toYMD(new Date());
+    const ym = today.slice(0, 7);
+    const monthInput = document.getElementById('filter-month-input');
+    const entryDate = document.getElementById('entry-date');
+    const fromDate = document.getElementById('filter-from-date');
+    const toDate = document.getElementById('filter-to-date');
+
+    monthInput.max = ym;
+    entryDate.max = today;
+    fromDate.max = today;
+    toDate.max = today;
+
+    // Defensively clamp back any value a non-conforming native picker already let through.
+    if (monthInput.value > ym) monthInput.value = ym;
+    if (fromDate.value > today) fromDate.value = today;
+    if (toDate.value > today) toDate.value = today;
+}
+
+// Refresh the live 'today' ceiling whenever the app/tab becomes visible again
+// (handles PWAs left open across midnight so max never goes stale).
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') refreshDateMaxes();
+});
 
 function switchTab(tabName) {
     document.querySelectorAll('.tab-view').forEach(view => view.classList.add('hidden'));
@@ -303,7 +344,10 @@ function setFilterMode(mode) {
     refreshAppView();
 }
 
-function applyFilters() { refreshAppView(); }
+function applyFilters() {
+    refreshDateMaxes();   // re-clamp month/range inputs in case a native picker let a future date through
+    refreshAppView();
+}
 
 function getFilteredTransactions() {
     return transactions.filter(item => {
@@ -418,6 +462,7 @@ function updateCategoryOptions() {
 }
 
 function openEntryModal(id = null) {
+    refreshDateMaxes();   // make sure 'today' is current every time the picker can be opened
     updateCategoryOptions();
     if (!id) {
         document.getElementById('entry-id').value = '';
@@ -447,13 +492,38 @@ function editEntry(id) {
 document.getElementById('transaction-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const id = document.getElementById('entry-id').value;
+    const dateInput = document.getElementById('entry-date');
+
+    // Belt-and-braces check: don't rely on the `max` attribute or the native mobile
+    // picker UI having blocked a future date (many real-device pickers don't). Compare
+    // the ISO date string directly against 'today', recomputed at submit time.
+    if (!dateInput.value || dateInput.value > toYMD(new Date())) {
+        showToast('Date cannot be in the future. Please pick today or an earlier date.', 'error');
+        dateInput.focus();
+        if (typeof dateInput.reportValidity === 'function') dateInput.reportValidity();
+        return;
+    }
+
+    // Belt-and-braces check: the `min="0.01"` attribute on #entry-amount only stops the
+    // spinner arrows - a user (or a mobile keyboard) can still type a negative or zero
+    // value directly, and the handler would otherwise send it straight to the sheet since
+    // it never calls checkValidity(). Re-validate the parsed number explicitly here.
+    const amountInput = document.getElementById('entry-amount');
+    const amountVal = parseFloat(amountInput.value);
+    if (!amountInput.value || isNaN(amountVal) || amountVal <= 0) {
+        showToast('Amount must be a positive number greater than 0.', 'error');
+        amountInput.focus();
+        if (typeof amountInput.reportValidity === 'function') amountInput.reportValidity();
+        return;
+    }
+
     const entry = {
         action: id ? "edit" : "add",
         id: id || Date.now().toString(),
         type: document.getElementById('entry-type').value,
-        date: document.getElementById('entry-date').value,
+        date: dateInput.value,
         category: document.getElementById('entry-category').value,
-        amount: parseFloat(document.getElementById('entry-amount').value),
+        amount: amountVal,
         description: document.getElementById('entry-description').value.trim()
     };
 
