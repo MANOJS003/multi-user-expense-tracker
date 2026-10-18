@@ -188,7 +188,8 @@ function duplicateEntry(id) {
     $('entry-type').value = it.type;
     updateCategoryOptions();
     $('entry-category').value = it.category;
-    $('entry-date').value = toYMD(new Date());
+    // keep the original entry's own date so the copy is a true duplicate (not re-dated to today)
+    $('entry-date').value = dOf(it);
     $('entry-amount').value = it.amount;
     $('entry-description').value = it.description || '';
 }
