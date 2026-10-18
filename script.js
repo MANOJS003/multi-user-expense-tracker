@@ -247,7 +247,10 @@ function setupDefaultDates() {
 //      transaction-form submit handler below), since <input type="date">.value is always
 //      normalized to ISO yyyy-MM-dd regardless of device locale, so plain string
 //      comparison against toYMD(new Date()) is reliable cross-platform.
-function refreshDateMaxes() {
+//
+// `notify` (used by applyFilters) pops a toast telling the user their filter date was
+// pushed back to today, instead of silently clamping it with no feedback.
+function refreshDateMaxes(notify = false) {
     const today = toYMD(new Date());
     const ym = today.slice(0, 7);
     const monthInput = document.getElementById('filter-month-input');
@@ -261,9 +264,14 @@ function refreshDateMaxes() {
     toDate.max = today;
 
     // Defensively clamp back any value a non-conforming native picker already let through.
-    if (monthInput.value > ym) monthInput.value = ym;
-    if (fromDate.value > today) fromDate.value = today;
-    if (toDate.value > today) toDate.value = today;
+    let clamped = false;
+    if (monthInput.value > ym) { monthInput.value = ym; clamped = true; }
+    if (fromDate.value > today) { fromDate.value = today; clamped = true; }
+    if (toDate.value > today) { toDate.value = today; clamped = true; }
+
+    if (clamped && notify) {
+        showToast("You can't filter by a future date. It has been reset to today.", 'error');
+    }
 }
 
 // Refresh the live 'today' ceiling whenever the app/tab becomes visible again
@@ -271,6 +279,12 @@ function refreshDateMaxes() {
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') refreshDateMaxes();
 });
+
+// Fires as soon as the user picks a from/to range-filter date, so the future-date alert
+// shows immediately rather than waiting for the Apply button to be clicked.
+function checkFilterDateChange() {
+    refreshDateMaxes(true);
+}
 
 function switchTab(tabName) {
     document.querySelectorAll('.tab-view').forEach(view => view.classList.add('hidden'));
@@ -345,7 +359,7 @@ function setFilterMode(mode) {
 }
 
 function applyFilters() {
-    refreshDateMaxes();   // re-clamp month/range inputs in case a native picker let a future date through
+    refreshDateMaxes(true);   // re-clamp month/range inputs + alert if a native picker let a future date through
     refreshAppView();
 }
 

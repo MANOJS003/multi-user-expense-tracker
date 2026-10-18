@@ -187,9 +187,9 @@
                     </div>
 
                     <div id="range-filter-container" class="hidden flex flex-wrap items-center gap-2 w-full">
-                        <input type="date" id="filter-from-date" class="flex-1 min-w-[120px] bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1.5 text-xs outline-none">
+                        <input type="date" id="filter-from-date" onchange="checkFilterDateChange()" class="flex-1 min-w-[120px] bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1.5 text-xs outline-none">
                         <span class="text-xs text-gray-400">to</span>
-                        <input type="date" id="filter-to-date" class="flex-1 min-w-[120px] bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1.5 text-xs outline-none">
+                        <input type="date" id="filter-to-date" onchange="checkFilterDateChange()" class="flex-1 min-w-[120px] bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1.5 text-xs outline-none">
                         <button onclick="applyFilters()" class="w-full sm:w-auto px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium transition">Apply</button>
                     </div>
                 </div>
