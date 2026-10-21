@@ -45,13 +45,13 @@ function setAuthMode(mode) {
         signupBtn.className = "flex-1 py-2 rounded-md text-xs font-semibold bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-xs transition";
         signinBtn.className = "flex-1 py-2 rounded-md text-xs font-medium text-gray-500 dark:text-gray-400";
         title.textContent = "Create Account";
-        subtitle.textContent = "Register a new user account in Google Sheet";
+        subtitle.textContent = "Create your Life OS account";
         submitText.textContent = "Sign Up";
     } else {
         signinBtn.className = "flex-1 py-2 rounded-md text-xs font-semibold bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-xs transition";
         signupBtn.className = "flex-1 py-2 rounded-md text-xs font-medium text-gray-500 dark:text-gray-400";
         title.textContent = "Welcome Back";
-        subtitle.textContent = "Sign in to access your personal expense database";
+        subtitle.textContent = "Sign in to your money, activity and habit tracker";
         submitText.textContent = "Sign In";
     }
 }

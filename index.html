@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Multi-User Expense Tracker</title>
+    <title>Life OS: money, activity and habits</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js CDN -->
@@ -11,7 +11,7 @@
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom Stylesheet -->
-    <link rel="stylesheet" href="style.css?v=9">
+    <link rel="stylesheet" href="style.css?v=12">
     <!-- SheetJS for Excel export/import -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- jsPDF and AutoTable for PDF export -->
@@ -97,7 +97,7 @@
                         <button id="menu-toggle" type="button" onclick="toggleSidebar()" aria-label="Open menu" aria-expanded="false" class="md:hidden p-2 -ml-1 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition shrink-0"><i class="fas fa-bars text-sm"></i></button>
                         <div class="p-1.5 sm:p-2 bg-blue-600 text-white rounded-lg shrink-0"><i class="fas fa-wallet text-sm sm:text-base"></i></div>
                         <div class="min-w-0">
-                            <span class="font-bold text-sm sm:text-base tracking-tight truncate block">Expense Tracker</span>
+                            <span class="font-bold text-sm sm:text-base tracking-tight truncate block">Life OS</span>
                             <span id="user-badge" class="text-[10px] sm:text-xs text-blue-600 dark:text-blue-400 font-mono block truncate"></span>
                         </div>
                     </div>
@@ -147,18 +147,38 @@
             </div>
 
             <!-- Tab Navigation Bar (horizontal on desktop, sliding sidebar drawer on mobile) -->
-            <div id="tab-nav" class="border-t border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 px-2 py-1 flex items-center gap-2 overflow-x-auto no-scrollbar sm:px-6 sm:py-2">
+            <div id="tab-nav" class="border-t border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 px-2 py-1 flex items-center gap-2 overflow-x-auto md:overflow-visible no-scrollbar sm:px-6 sm:py-2">
                 <div class="md:hidden flex items-center justify-between w-full pb-2 mb-1 border-b border-gray-200 dark:border-gray-700">
                     <span class="font-bold text-sm">Menu</span>
                     <button type="button" onclick="closeSidebar()" aria-label="Close menu" class="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"><i class="fas fa-times"></i></button>
                 </div>
-                <button onclick="switchTab('dashboard')" id="tab-dashboard" class="nav-tab flex-none whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center gap-1.5 transition-all"><i class="fas fa-home text-xs"></i><span>Dashboard</span></button>
-                <button onclick="openEntryModal()" class="nav-tab flex-none whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center gap-1.5 transition-all"><i class="fas fa-plus-circle text-xs text-blue-500"></i><span>Add Entry</span></button>
-                <button onclick="switchTab('analytics')" id="tab-analytics" class="nav-tab flex-none whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center gap-1.5 transition-all"><i class="fas fa-chart-pie text-xs"></i><span>Analytics</span></button>
-                <button onclick="switchTab('smart')" id="tab-smart" class="nav-tab flex-none whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center gap-1.5 transition-all"><i class="fas fa-medal text-xs"></i><span>Smart Saver</span></button>
-                <button onclick="switchTab('budgets')" id="tab-budgets" class="nav-tab flex-none whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center gap-1.5 transition-all"><i class="fas fa-bullseye text-xs"></i><span>Budgets</span></button>
-                <button onclick="switchTab('goals')" id="tab-goals" class="nav-tab flex-none whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center gap-1.5 transition-all"><i class="fas fa-trophy text-xs"></i><span>Goals</span></button>
-                <button onclick="switchTab('recurring')" id="tab-recurring" class="nav-tab flex-none whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center gap-1.5 transition-all"><i class="fas fa-rotate text-xs"></i><span>Recurring</span></button>
+                <button type="button" onclick="switchTab('life')" id="tab-life" class="nav-tab nav-top flex-none whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center gap-1.5 transition-all"><i class="fas fa-compass text-xs"></i><span>Life</span></button>
+                <div class="nav-group" data-group="money">
+                    <button type="button" class="nav-group-btn" aria-haspopup="true" aria-expanded="false" aria-controls="nav-panel-money"><i class="fas fa-wallet text-xs"></i><span>Money</span><i class="fas fa-chevron-down nav-caret"></i></button>
+                    <div id="nav-panel-money" class="nav-panel" role="menu">
+                        <button type="button" role="menuitem" id="tab-dashboard" onclick="switchTab('dashboard')" class="nav-tab nav-item w-full text-left px-3 py-2 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-all"><i class="fas fa-gauge text-xs w-4 text-center "></i><span>Dashboard</span></button>
+                        <button type="button" role="menuitem" onclick="openEntryModal()" class="nav-tab nav-item w-full text-left px-3 py-2 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-all"><i class="fas fa-plus-circle text-xs w-4 text-center text-blue-500"></i><span>Add entry</span></button>
+                        <button type="button" role="menuitem" id="tab-analytics" onclick="switchTab('analytics')" class="nav-tab nav-item w-full text-left px-3 py-2 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-all"><i class="fas fa-chart-pie text-xs w-4 text-center "></i><span>Analytics</span></button>
+                        <button type="button" role="menuitem" id="tab-smart" onclick="switchTab('smart')" class="nav-tab nav-item w-full text-left px-3 py-2 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-all"><i class="fas fa-medal text-xs w-4 text-center "></i><span>Smart Saver</span></button>
+                        <button type="button" role="menuitem" id="tab-budgets" onclick="switchTab('budgets')" class="nav-tab nav-item w-full text-left px-3 py-2 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-all"><i class="fas fa-bullseye text-xs w-4 text-center "></i><span>Budgets</span></button>
+                        <button type="button" role="menuitem" id="tab-goals" onclick="switchTab('goals')" class="nav-tab nav-item w-full text-left px-3 py-2 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-all"><i class="fas fa-trophy text-xs w-4 text-center "></i><span>Goals</span></button>
+                        <button type="button" role="menuitem" id="tab-recurring" onclick="switchTab('recurring')" class="nav-tab nav-item w-full text-left px-3 py-2 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-all"><i class="fas fa-rotate text-xs w-4 text-center "></i><span>Recurring</span></button>
+                    </div>
+                </div>
+                <div class="nav-group" data-group="health">
+                    <button type="button" class="nav-group-btn" aria-haspopup="true" aria-expanded="false" aria-controls="nav-panel-health"><i class="fas fa-heart-pulse text-xs"></i><span>Health</span><i class="fas fa-chevron-down nav-caret"></i></button>
+                    <div id="nav-panel-health" class="nav-panel" role="menu">
+                        <button type="button" role="menuitem" id="tab-activities" onclick="switchTab('activities')" class="nav-tab nav-item w-full text-left px-3 py-2 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-all"><i class="fas fa-person-running text-xs w-4 text-center "></i><span>Activities</span></button>
+                        <button type="button" role="menuitem" onclick="L.openActivity()" class="nav-tab nav-item w-full text-left px-3 py-2 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-all"><i class="fas fa-bolt text-xs w-4 text-center text-rose-500"></i><span>Log activity</span></button>
+                    </div>
+                </div>
+                <div class="nav-group" data-group="habits">
+                    <button type="button" class="nav-group-btn" aria-haspopup="true" aria-expanded="false" aria-controls="nav-panel-habits"><i class="fas fa-check-double text-xs"></i><span>Habits</span><i class="fas fa-chevron-down nav-caret"></i></button>
+                    <div id="nav-panel-habits" class="nav-panel" role="menu">
+                        <button type="button" role="menuitem" id="tab-habits" onclick="switchTab('habits')" class="nav-tab nav-item w-full text-left px-3 py-2 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-all"><i class="fas fa-list-check text-xs w-4 text-center "></i><span>My habits</span></button>
+                        <button type="button" role="menuitem" onclick="L.openHabit()" class="nav-tab nav-item w-full text-left px-3 py-2 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-all"><i class="fas fa-plus text-xs w-4 text-center text-amber-500"></i><span>New habit</span></button>
+                    </div>
+                </div>
             </div>
         </header>
 
@@ -372,10 +392,77 @@
                 <div id="recurring-list" class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4"></div>
             </div>
 
+            <!-- LIFE OVERVIEW -->
+            <div id="view-life" class="tab-view hidden space-y-4 sm:space-y-6">
+                <div id="life-alerts"></div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+                    <div id="life-hero" class="lg:col-span-2 rounded-xl border border-gray-200 dark:border-gray-700 p-5"></div>
+                    <div id="life-today" class="rounded-xl border border-gray-200 dark:border-gray-700 p-5"></div>
+                </div>
+                <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
+                        <h3 class="text-sm font-bold flex items-center gap-1.5"><i class="fas fa-border-all text-indigo-500"></i>Everything you did, one square a day</h3>
+                    </div>
+                    <p id="life-hm-summary" class="text-[11px] text-gray-500 dark:text-gray-400 mb-3"></p>
+                    <div id="life-hm-filters" class="flex flex-wrap gap-2 mb-3"></div>
+                    <div class="lh-scroll"><div id="life-heatmap"></div></div>
+                    <div class="flex items-center justify-end gap-1 mt-2 text-[10px] text-gray-400">Less <span id="life-hm-legend" class="lh-legend"><i class="lh-cell"></i><i class="lh-cell l1"></i><i class="lh-cell l2"></i><i class="lh-cell l3"></i><i class="lh-cell l4"></i></span> More</div>
+                    <div id="life-hm-detail" class="mt-3"></div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                    <div id="life-week" class="rounded-xl border border-gray-200 dark:border-gray-700 p-5"></div>
+                    <div id="life-insights" class="rounded-xl border border-gray-200 dark:border-gray-700 p-5"></div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                    <div id="life-achievements" class="rounded-xl border border-gray-200 dark:border-gray-700 p-5"></div>
+                    <div id="life-records" class="rounded-xl border border-gray-200 dark:border-gray-700 p-5"></div>
+                </div>
+                <div id="life-prefs" class="rounded-xl border border-gray-200 dark:border-gray-700 p-5"></div>
+            </div>
+
+            <!-- ACTIVITIES VIEW -->
+            <div id="view-activities" class="tab-view hidden space-y-4 sm:space-y-6">
+                <div class="flex items-center justify-between gap-2">
+                    <div><h2 class="text-base font-bold">Activities</h2><p class="text-xs text-gray-500 dark:text-gray-400">Workouts, runs, coding practice, reading and anything custom</p></div>
+                    <button onclick="L.openActivity()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium"><i class="fas fa-plus mr-1"></i>Log activity</button>
+                </div>
+                <div id="act-summary" class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4"></div>
+                <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5">
+                    <h3 class="text-xs sm:text-sm font-bold mb-3 flex items-center gap-1.5"><i class="fas fa-chart-column text-rose-500"></i>Active minutes per week</h3>
+                    <div class="relative h-56 sm:h-64"><canvas id="act-week-chart"></canvas></div>
+                </div>
+                <div class="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div class="p-3 sm:p-5 border-b border-gray-200 dark:border-gray-700 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <input type="text" id="act-filter-q" oninput="L.refilter()" placeholder="Search activities" aria-label="Search activities" class="fld">
+                        <select id="act-filter-cat" onchange="L.refilter()" aria-label="Category" class="fld"></select>
+                        <input type="month" id="act-filter-month" onchange="L.refilter()" aria-label="Month" class="fld">
+                    </div>
+                    <div class="overflow-x-auto w-full">
+                        <table class="w-full text-left text-xs whitespace-nowrap">
+                            <thead class="text-gray-500 dark:text-gray-400 text-[11px] uppercase tracking-wider border-b border-gray-200 dark:border-gray-700"><tr><th class="px-4 py-3">Date</th><th class="px-4 py-3">Category</th><th class="px-4 py-3">Activity</th><th class="px-4 py-3">Details</th><th class="px-4 py-3 text-center">Actions</th></tr></thead>
+                            <tbody id="act-tbody" class="divide-y divide-gray-200 dark:divide-gray-700"></tbody>
+                        </table>
+                    </div>
+                    <div id="act-more" class="px-4 py-3 border-t border-gray-200 dark:border-gray-700 text-center"></div>
+                </div>
+            </div>
+
+            <!-- HABITS VIEW -->
+            <div id="view-habits" class="tab-view hidden space-y-4 sm:space-y-6">
+                <div class="flex items-center justify-between gap-2">
+                    <div><h2 class="text-base font-bold">Habits</h2><p id="habit-summary" class="text-xs text-gray-500 dark:text-gray-400"></p></div>
+                    <div class="flex items-center gap-2">
+                        <button id="habit-archive-btn" onclick="L.toggleArchived()" class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-xs font-medium">Show archived</button>
+                        <button onclick="L.openHabit()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium"><i class="fas fa-plus mr-1"></i>New habit</button>
+                    </div>
+                </div>
+                <div id="habit-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4"></div>
+            </div>
+
         </main>
 
         <!-- Floating quick-add button -->
-        <button id="fab" onclick="openEntryModal()" title="Add entry (N)" class="fab"><i class="fas fa-plus"></i></button>
+        <button id="fab" onclick="L.quickAdd()" title="Quick add" aria-label="Quick add" class="fab"><i class="fas fa-plus"></i></button>
     </div>
 
     <!-- MODALS -->
@@ -479,7 +566,13 @@
     <div id="export-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs hidden p-3">
         <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-sm p-5 shadow-2xl border border-gray-200 dark:border-gray-700">
             <h3 id="export-modal-title" class="text-sm font-bold mb-1">Export Data</h3>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">How much data do you want to download?</p>
+            <label class="lbl" for="export-dataset">What to export</label>
+            <select id="export-dataset" onchange="updateExportCount()" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-2.5 py-2 text-xs outline-none mb-3">
+                <option value="money">Money (income and expenses)</option>
+                <option value="activities">Activities and habits</option>
+                <option value="everything">Everything (money, activities, habits)</option>
+            </select>
+            <label class="lbl" for="export-period">Period</label>
             <select id="export-period" onchange="updateExportCount()" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-2.5 py-2 text-xs outline-none">
                 <option value="this_month">This Month</option>
                 <option value="last_month">Last Month</option>
@@ -649,9 +742,60 @@
         </div>
     </div>
 
+    <!-- QUICK ADD MODAL -->
+    <div id="quick-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs hidden p-3">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-xs p-5 shadow-2xl border border-gray-200 dark:border-gray-700">
+            <h3 class="text-sm font-bold mb-3">Quick add</h3>
+            <div class="space-y-2">
+                <button onclick="L.quick('money')" class="w-full flex items-center gap-3 p-3 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-emerald-500 text-left"><span class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-emerald-100 text-emerald-600 shrink-0"><i class="fas fa-receipt"></i></span><span><span class="block text-xs font-semibold">Income or expense</span><span class="block text-[11px] text-gray-500 dark:text-gray-400">Record money in or out</span></span></button>
+                <button onclick="L.quick('activity')" class="w-full flex items-center gap-3 p-3 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-rose-500 text-left"><span class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-rose-100 text-rose-600 shrink-0"><i class="fas fa-person-running"></i></span><span><span class="block text-xs font-semibold">Activity</span><span class="block text-[11px] text-gray-500 dark:text-gray-400">Workout, run, coding, reading</span></span></button>
+                <button onclick="L.quick('habit')" class="w-full flex items-center gap-3 p-3 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-amber-500 text-left"><span class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-amber-100 text-amber-600 shrink-0"><i class="fas fa-check-double"></i></span><span><span class="block text-xs font-semibold">Habits</span><span class="block text-[11px] text-gray-500 dark:text-gray-400">Tick off today's habits</span></span></button>
+            </div>
+            <button type="button" onclick="closeModal('quick-modal')" class="w-full mt-3 text-gray-500 dark:text-gray-400 py-1.5 rounded-lg text-xs">Cancel</button>
+        </div>
+    </div>
+
+    <!-- ACTIVITY LOGGER MODAL (fields are generated from the category + type) -->
+    <div id="act-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs hidden p-3 sm:p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md p-5 shadow-2xl border border-gray-200 dark:border-gray-700 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4"><h3 id="act-modal-title" class="text-sm sm:text-base font-bold">Log activity</h3><button type="button" onclick="closeModal('act-modal')" aria-label="Close" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-base"></i></button></div>
+            <form id="act-form" class="space-y-3">
+                <input type="hidden" id="act-id">
+                <div class="grid grid-cols-2 gap-3">
+                    <div><label class="lbl" for="act-category">Category</label><select id="act-category" onchange="L.onCat()" class="fld"></select></div>
+                    <div><label class="lbl" for="act-type">Activity</label><select id="act-type" onchange="L.onType()" class="fld"></select></div>
+                </div>
+                <div><label class="lbl" for="act-date">Date</label><input type="date" id="act-date" required onchange="L.onDate()" class="fld"></div>
+                <div id="act-fields" class="grid grid-cols-2 gap-3"></div>
+                <div><label class="lbl" for="act-notes">Notes</label><input type="text" id="act-notes" maxlength="300" placeholder="Optional" class="fld"></div>
+                <div class="flex gap-2 pt-2"><button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg text-xs">Save</button><button type="button" onclick="closeModal('act-modal')" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-xs">Cancel</button></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- HABIT MODAL -->
+    <div id="habit-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs hidden p-3">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-sm p-5 shadow-2xl border border-gray-200 dark:border-gray-700 max-h-[90vh] overflow-y-auto">
+            <h3 id="habit-modal-title" class="text-sm font-bold mb-3">New habit</h3>
+            <form id="habit-form" class="space-y-3">
+                <input type="hidden" id="habit-id">
+                <div><label class="lbl" for="habit-name">Name</label><input type="text" id="habit-name" maxlength="40" required placeholder="e.g. Drink water, Read 10 pages" class="fld"></div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div><label class="lbl" for="habit-mode">Tracked as</label><select id="habit-mode" onchange="L.onHabitMode()" class="fld"><option value="check">Done or not</option><option value="count">A daily count</option></select></div>
+                    <div><label class="lbl" for="habit-perweek">Days per week</label><input type="number" id="habit-perweek" min="1" max="7" value="7" class="fld"></div>
+                </div>
+                <div id="habit-target-wrap" class="hidden"><label class="lbl" for="habit-target">Daily target</label><input type="number" id="habit-target" min="1" value="8" class="fld"></div>
+                <div><span class="lbl">Icon</span><div id="habit-icons" class="flex flex-wrap gap-2"></div></div>
+                <div><span class="lbl">Colour</span><div id="habit-colors" class="flex flex-wrap gap-2"></div></div>
+                <div class="flex gap-2 pt-1"><button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg text-xs">Save habit</button><button type="button" onclick="closeModal('habit-modal')" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-xs">Cancel</button></div>
+            </form>
+        </div>
+    </div>
+
     <!-- External Script File -->
-    <script src="script.js?v=8"></script>
+    <script src="script.js?v=9"></script>
     <script src="features.js?v=4"></script>
     <script src="smart.js?v=2"></script>
+    <script src="life.js?v=3"></script>
 </body>
 </html>

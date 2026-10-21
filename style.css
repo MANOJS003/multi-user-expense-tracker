@@ -947,3 +947,129 @@ html.dark .chip-done { color: #6ee7b7; }
     animation: popIn 0.5s var(--ease-spring) both;
 }
 html.dark #checkin-modal > div { background: rgba(17, 24, 39, 0.85) !important; border-color: rgba(255, 255, 255, 0.08) !important; }
+
+/* =========================================================
+   LIFE OS: heatmap, habits, activity logger, alerts
+   ========================================================= */
+#quick-modal, #act-modal, #habit-modal { animation: fadeIn 0.25s ease both; }
+#quick-modal > div, #act-modal > div, #habit-modal > div {
+    background: var(--glass-light) !important;
+    backdrop-filter: blur(20px) saturate(170%);
+    -webkit-backdrop-filter: blur(20px) saturate(170%);
+    border: 1px solid rgba(255, 255, 255, 0.6) !important;
+    box-shadow: 0 30px 70px -15px rgba(79, 70, 229, 0.45) !important;
+    animation: popIn 0.5s var(--ease-spring) both;
+}
+html.dark #quick-modal > div, html.dark #act-modal > div, html.dark #habit-modal > div {
+    background: rgba(17, 24, 39, 0.85) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+#act-fields > * { animation: fadeUp 0.35s ease both; }
+.col-span-2 { grid-column: span 2 / span 2; }
+
+/* the extra tabs: keep the mobile drawer stagger going */
+@media (max-width: 767px) {
+    #tab-nav.is-open .nav-tab:nth-child(9)  { animation-delay: 0.32s; }
+    #tab-nav.is-open .nav-tab:nth-child(10) { animation-delay: 0.36s; }
+    #tab-nav.is-open .nav-tab:nth-child(11) { animation-delay: 0.40s; }
+}
+
+/* ---- unified heatmap (53 weeks, Sunday-first columns) ---- */
+.lh-scroll { overflow-x: auto; padding: 2px 2px 8px; }
+.lh { --cell: 12px; --gap: 3px; --rgb: 99 102 241; display: inline-block; min-width: max-content; }
+.lh-months, .lh-grid { display: grid; grid-template-columns: repeat(53, var(--cell)); gap: var(--gap); }
+.lh-months { height: 14px; margin-bottom: 4px; font-size: 10px; color: #9ca3af; }
+.lh-months span { white-space: nowrap; }
+.lh-grid { grid-template-rows: repeat(7, var(--cell)); grid-auto-flow: column; }
+.lh-cell { display: block; width: var(--cell); height: var(--cell); padding: 0; border: 0; border-radius: 3px; background: rgba(148, 163, 184, 0.2); animation: none !important; }
+button.lh-cell { cursor: pointer; transition: transform 0.15s ease; }
+button.lh-cell:hover { transform: scale(1.5); position: relative; z-index: 2; }
+button.lh-cell:focus-visible { outline: 2px solid #6366f1; outline-offset: 2px; }
+.lh-cell.l1 { background: rgb(var(--rgb) / 0.3); }
+.lh-cell.l2 { background: rgb(var(--rgb) / 0.5); }
+.lh-cell.l3 { background: rgb(var(--rgb) / 0.75); }
+.lh-cell.l4 { background: rgb(var(--rgb) / 1); }
+.lh-cell.sel { outline: 2px solid currentColor; outline-offset: 1px; }
+.lh-future { visibility: hidden; }
+.lh-legend { --rgb: 99 102 241; display: inline-flex; gap: 3px; }
+.lh-legend .lh-cell { width: 12px; height: 12px; }
+@media (max-width: 640px) { .lh { --cell: 11px; --gap: 2px; } }
+.chip-on { background: linear-gradient(135deg, #6366f1, #06b6d4) !important; color: #fff !important; }
+
+/* ---- overview extras ---- */
+.life-minis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+@media (min-width: 640px) { .life-minis { grid-template-columns: repeat(4, 1fr); } }
+.life-mini { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 6px; border-radius: 12px; background: rgba(148, 163, 184, 0.12); text-align: center; }
+.life-mini b { font-size: 18px; line-height: 1.1; }
+.life-mini span { font-size: 10px; color: #9ca3af; }
+.life-alert { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 14px; font-size: 12px; background: rgba(245, 158, 11, 0.16); border: 1px solid rgba(245, 158, 11, 0.45); color: #92400e; }
+html.dark .life-alert { color: #fcd34d; }
+.life-alert > i { font-size: 18px; flex: none; }
+.life-alert > div { flex: 1; min-width: 0; }
+
+/* ---- habits ---- */
+.hb-icon { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 12px; flex: none; color: var(--hc); background: color-mix(in srgb, var(--hc) 16%, transparent); }
+.hb-check { width: 44px; height: 44px; flex: none; border-radius: 50%; border: 2px solid rgba(148, 163, 184, 0.6); color: transparent; display: inline-flex; align-items: center; justify-content: center; }
+.hb-check.hb-sm { width: 32px; height: 32px; font-size: 12px; color: var(--hc); }
+.hb-check:hover { border-color: var(--hc); }
+.hb-check.is-done { background: var(--hc); border-color: var(--hc); color: #fff; animation: badgePop 0.5s var(--ease-spring) both; }
+.hb-step { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; }
+.hb-step button { width: 30px; height: 30px; border-radius: 50%; border: 1px solid rgba(148, 163, 184, 0.5); }
+.hb-step button:hover { background: rgba(99, 102, 241, 0.14); }
+.hb-dots { display: flex; justify-content: space-between; gap: 4px; }
+.hb-dot { flex: 1; max-width: 38px; height: 26px; border-radius: 8px; font-size: 10px; font-weight: 600; color: #9ca3af; background: rgba(148, 163, 184, 0.18); }
+.hb-dot.is-on { background: var(--hc); color: #fff; }
+.hb-pick { width: 36px; height: 36px; border-radius: 10px; border: 1px solid rgba(148, 163, 184, 0.45); }
+.hb-pick.is-sel { background: rgba(99, 102, 241, 0.18); border-color: #6366f1; color: #6366f1; }
+.hb-swatch { width: 26px; height: 26px; border-radius: 50%; border: 2px solid transparent; }
+.hb-swatch.is-sel { outline: 2px solid #6366f1; outline-offset: 2px; }
+
+/* ---- logger focus + motion preferences ---- */
+.fld:focus-visible, .chk:focus-visible, .hb-check:focus-visible, .hb-dot:focus-visible { outline: 2px solid #6366f1; outline-offset: 2px; }
+
+/* =========================================================
+   GROUPED NAV: Life | Money | Health | Habits (click to open)
+   ========================================================= */
+@media (min-width: 768px) { #tab-nav { overflow: visible !important; } }
+.nav-group { position: relative; }
+.nav-group-btn {
+    display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 12px;
+    font-size: 12px; font-weight: 600; white-space: nowrap; color: #4b5563;
+}
+html.dark .nav-group-btn { color: #d1d5db; }
+.nav-group-btn:hover { background: rgba(99, 102, 241, 0.12); }
+.nav-group.open > .nav-group-btn, .nav-group-btn.nav-group-active { color: #2563eb; background: rgba(59, 130, 246, 0.14); }
+html.dark .nav-group.open > .nav-group-btn, html.dark .nav-group-btn.nav-group-active { color: #93c5fd; }
+.nav-caret { font-size: 9px; margin-left: 2px; transition: transform 0.25s var(--ease-spring); }
+.nav-group.open .nav-caret { transform: rotate(180deg); }
+.nav-panel { display: none; }
+.nav-group.open > .nav-panel { display: block; }
+#tab-life.nav-top { font-weight: 600; }
+
+@media (min-width: 768px) {
+    .nav-panel {
+        position: absolute; top: calc(100% + 6px); left: 0; z-index: 45; min-width: 13rem; padding: 6px;
+        background: var(--glass-light); backdrop-filter: blur(18px) saturate(170%); -webkit-backdrop-filter: blur(18px) saturate(170%);
+        border: 1px solid rgba(255, 255, 255, 0.6); border-radius: 14px;
+        box-shadow: 0 24px 50px -14px rgba(79, 70, 229, 0.45);
+        transform-origin: top left; animation: popIn 0.3s var(--ease-spring) both;
+    }
+    html.dark .nav-panel { background: rgba(17, 24, 39, 0.92); border-color: rgba(255, 255, 255, 0.08); }
+    .nav-panel .nav-item { white-space: nowrap; }
+}
+
+/* mobile drawer: groups behave as accordions */
+@media (max-width: 767px) {
+    .nav-group { width: 100%; position: relative; z-index: 1; }
+    #tab-nav .nav-group-btn { width: 100%; justify-content: flex-start; padding: 0.7rem 0.9rem; font-size: 0.85rem; color: rgba(255, 255, 255, 0.92); }
+    #tab-nav .nav-group-btn:hover { background: rgba(255, 255, 255, 0.14); }
+    #tab-nav .nav-caret { margin-left: auto; }
+    #tab-nav .nav-group.open > .nav-group-btn, #tab-nav .nav-group-btn.nav-group-active { background: rgba(255, 255, 255, 0.2); color: #fff; }
+    #tab-nav .nav-panel { padding: 0.15rem 0 0.35rem 1.1rem; margin-left: 0.9rem; border-left: 2px solid rgba(255, 255, 255, 0.3); }
+    #tab-nav .nav-panel .nav-item { padding: 0.55rem 0.8rem !important; }
+    #tab-nav.is-open .nav-group, #tab-nav.is-open .nav-top { animation: slideInRow 0.45s var(--ease-spring) both; }
+}
+
+/* habit week strip: Sunday to Saturday */
+.hb-dot:disabled { opacity: 0.35; cursor: not-allowed; }
+.hb-dot.is-today { outline: 2px solid var(--hc); outline-offset: 1px; }
